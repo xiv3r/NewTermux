@@ -655,7 +655,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         mSessionChipGroup.removeAllViews();
         java.util.List<com.termux.shared.termux.shell.command.runner.terminal.TermuxSession> sessions = mTermuxService.getTermuxSessions();
-        TerminalSession currentSession = mTermuxTerminalSessionActivityClient.getCurrentSession();
+        TerminalSession currentSession = getCurrentSession();
 
         for (int i = 0; i < sessions.size(); i++) {
             com.termux.shared.termux.shell.command.runner.terminal.TermuxSession termuxSession = sessions.get(i);
