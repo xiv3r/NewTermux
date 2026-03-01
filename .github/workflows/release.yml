@@ -42,7 +42,14 @@ jobs:
           if [ -f SYMLINKS.txt ]; then sed -i "s|${OLD_PREFIX}|${NEW_PREFIX}|g" SYMLINKS.txt; fi
           find . -type f -print0 | xargs -0 grep -lF "$OLD_PREFIX" 2>/dev/null | xargs -0 sed -i "s|${OLD_PREFIX}|${NEW_PREFIX}|g" 2>/dev/null || true
           find . -type f | while read f; do if file "$f" | grep -q 'ELF'; then RPATH=$(patchelf --print-rpath "$f" 2>/dev/null || true); if echo "$RPATH" | grep -qF "$OLD_PKG"; then NEW_RPATH=$(echo "$RPATH" | sed "s|${OLD_PREFIX}|${NEW_PREFIX}|g"); patchelf --set-rpath "$NEW_RPATH" "$f" 2>/dev/null || true; fi; fi; done
+          # 4. Ensure execution permissions
+          find bin libexec -type f -exec chmod +x {} + 2>/dev/null || true
+          find usr/bin usr/libexec -type f -exec chmod +x {} + 2>/dev/null || true
+          
+          # 5. Repack bootstrap
           zip -q -r "../bootstrap-${ARCH}.zip" .
+          cd ..
+          echo "Repacked: $(du -sh bootstrap-${ARCH}.zip | cut -f1)"
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
