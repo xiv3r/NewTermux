@@ -2,13 +2,14 @@ name: NewTermux Full Release
 
 on:
   push:
+    branches: [ main ]
     tags: [ 'v*' ]
   workflow_dispatch:
     inputs:
       tag:
         description: 'Tag to release'
         required: true
-        default: 'v1.0.1'
+        default: 'v1.1.2'
 
 jobs:
   patch-bootstraps:
@@ -41,38 +42,30 @@ jobs:
           unzip -q "bootstrap-${ARCH}.zip" -d extract/
           cd extract
           
-          # 1. Text-based replacement for scripts and configs (safe for different lengths)
+          # 1. Text-based replacement
           echo "Patching scripts and configs..."
           find . -type f | while read f; do
             if file "$f" | grep -qE 'text|script'; then
               sed -i "s|${OLD_USR}|${NEW_USR}|g" "$f" 2>/dev/null || true
               sed -i "s|${OLD_HOME}|${NEW_HOME}|g" "$f" 2>/dev/null || true
-              # Also patch occurrences of the package name alone in text files
               sed -i "s|com.termux|com.newtermux.app|g" "$f" 2>/dev/null || true
-              # Branding
               sed -i "s|Termux|NewTermux|g" "$f" 2>/dev/null || true
             fi
           done
 
-          # 2. Binary-safe replacement for ALL files (including ELF binaries)
-          # We use a Python script to ensure fixed-length replacement with null padding.
+          # 2. Binary-safe replacement
           echo "Patching binaries safely..."
           python3 -c "
 import os
 def patch_file(path, old_str, new_str):
-    if len(new_str) > len(old_str):
-        print(f'Error: new string too long for {path}')
-        return
-    with open(path, 'rb') as f:
-        data = f.read()
-    if old_str.encode() not in data:
-        return
+    if len(new_str) > len(old_str): return
+    with open(path, 'rb') as f: data = f.read()
+    if old_str.encode() not in data: return
     print(f'Binary patching {path}...')
     pad = b'\0' * (len(old_str) - len(new_str))
     replacement = new_str.encode() + pad
     new_data = data.replace(old_str.encode(), replacement)
-    with open(path, 'wb') as f:
-        f.write(new_data)
+    with open(path, 'wb') as f: f.write(new_data)
 
 for root, dirs, files in os.walk('.'):
     for name in files:
@@ -81,36 +74,35 @@ for root, dirs, files in os.walk('.'):
         patch_file(p, '$OLD_HOME', '$NEW_HOME')
 "
 
-          # 3. ELF Header patching (Interpreter and RPATH)
+          # 3. ELF Header patching
           echo "Patching ELF headers..."
           find . -type f | while read f; do
             if file "$f" | grep -q 'ELF'; then
               INTERP=$(patchelf --print-interpreter "$f" 2>/dev/null || true)
-              if [ -n "$INTERP" ] && echo "$INTERP" | grep -qF "com.termux"; then
-                NEW_INTERP=$(echo "$INTERP" | sed "s|${OLD_USR}|${NEW_USR}|g")
-                patchelf --set-interpreter "$NEW_INTERP" "$f" 2>/dev/null || true
+              if [ -n \"$INTERP\" ] && echo \"$INTERP\" | grep -qF \"com.termux\"; then
+                NEW_INTERP=$(echo \"$INTERP\" | sed \"s|${OLD_USR}|${NEW_USR}|g\")
+                patchelf --set-interpreter \"$NEW_INTERP\" \"$f\" 2>/dev/null || true
               fi
-              RPATH=$(patchelf --print-rpath "$f" 2>/dev/null || true)
-              if [ -n "$RPATH" ] && echo "$RPATH" | grep -qF "com.termux"; then
-                NEW_RPATH=$(echo "$RPATH" | sed "s|${OLD_USR}|${NEW_USR}|g")
-                patchelf --set-rpath "$NEW_RPATH" "$f" 2>/dev/null || true
+              RPATH=$(patchelf --print-rpath \"$f\" 2>/dev/null || true)
+              if [ -n \"$RPATH\" ] && echo \"$RPATH\" | grep -qF \"com.termux\"; then
+                NEW_RPATH=$(echo \"$RPATH\" | sed \"s|${OLD_USR}|${NEW_USR}|g\")
+                patchelf --set-rpath \"$NEW_RPATH\" \"$f\" 2>/dev/null || true
               fi
             fi
           done
           
-          # 4. Specific fix for MOTD (Banner)
+          # 4. Branding
           if [ -f etc/motd ]; then
             echo "Welcome to NewTermux!" > etc/motd
           fi
           
-          # 5. Ensure execution permissions
+          # 5. Permissions
           find bin libexec -type f -exec chmod +x {} + 2>/dev/null || true
           find usr/bin usr/libexec -type f -exec chmod +x {} + 2>/dev/null || true
           
-          # 6. Repack bootstrap
+          # 6. Repack
           zip -q -r "../bootstrap-${ARCH}.zip" .
           cd ..
-          echo "Repacked: $(du -sh bootstrap-${ARCH}.zip | cut -f1)"
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
