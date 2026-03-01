@@ -62,8 +62,17 @@ import com.termux.view.TerminalViewClient;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.ViewPager;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+
+import com.newtermux.features.AutoCorrectHandler;
+import com.newtermux.features.RootToggleManager;
+import com.newtermux.features.SpeechInputManager;
 
 import java.util.Arrays;
 
@@ -176,6 +185,14 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private float mTerminalToolbarDefaultHeight;
 
 
+    // NewTermux features
+    private SpeechInputManager mSpeechInputManager;
+    private RootToggleManager mRootToggleManager;
+    private AutoCorrectHandler mAutoCorrectHandler;
+    private ImageButton mBtnSTT;
+    private ImageButton mBtnRootToggle;
+    private static final int REQUEST_RECORD_AUDIO = 201;
+
     private static final int CONTEXT_MENU_SELECT_URL_ID = 0;
     private static final int CONTEXT_MENU_SHARE_TRANSCRIPT_ID = 1;
     private static final int CONTEXT_MENU_SHARE_SELECTED_TEXT = 10;
@@ -250,6 +267,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         setNewSessionButtonView();
 
         setToggleKeyboardView();
+
+        setupNewTermuxFeatures();
 
         registerForContextMenu(mTerminalView);
 
@@ -351,6 +370,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         Logger.logDebug(LOG_TAG, "onDestroy");
 
         if (mIsInvalidState) return;
+
+        if (mSpeechInputManager != null) { mSpeechInputManager.destroy(); mSpeechInputManager = null; }
+        if (mAutoCorrectHandler != null) { mAutoCorrectHandler.destroy(); mAutoCorrectHandler = null; }
 
         if (mTermuxService != null) {
             // Do not leave service and session clients with references to activity.
@@ -562,6 +584,126 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     }
 
 
+
+    // -----------------------------------------------------------------------------------------
+    // NewTermux Features: Speech-to-Text, Root Toggle, AutoCorrect
+    // -----------------------------------------------------------------------------------------
+
+    private void setupNewTermuxFeatures() {
+        // Initialize managers
+        mSpeechInputManager = new SpeechInputManager(this);
+        mRootToggleManager = RootToggleManager.getInstance();
+        mAutoCorrectHandler = new AutoCorrectHandler(this);
+
+        // Wire STT button
+        mBtnSTT = findViewById(R.id.btn_stt);
+        if (mBtnSTT != null) {
+            mBtnSTT.setOnClickListener(v -> onSTTButtonClicked());
+            if (!SpeechInputManager.isAvailable(this)) {
+                mBtnSTT.setAlpha(0.4f); // dim if STT not available
+            }
+        }
+
+        // Wire root toggle button — only show on rooted devices
+        mBtnRootToggle = findViewById(R.id.btn_root_toggle);
+        if (mBtnRootToggle != null) {
+            if (RootToggleManager.isDeviceRooted()) {
+                mBtnRootToggle.setVisibility(View.VISIBLE);
+                mBtnRootToggle.setOnClickListener(v -> onRootToggleClicked());
+            }
+        }
+
+        // STT result callback
+        mSpeechInputManager.setCallback(new SpeechInputManager.SpeechCallback() {
+            @Override
+            public void onResult(String text) {
+                runOnUiThread(() -> insertSpeechTextToTerminal(text));
+            }
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> showToast(error, false));
+            }
+            @Override
+            public void onListeningStarted() {
+                runOnUiThread(() -> updateSTTButtonState(true));
+            }
+            @Override
+            public void onListeningStopped() {
+                runOnUiThread(() -> updateSTTButtonState(false));
+            }
+        });
+    }
+
+    private void onSTTButtonClicked() {
+        if (mSpeechInputManager == null) return;
+        if (mSpeechInputManager.isListening()) {
+            mSpeechInputManager.stopListening();
+            return;
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
+        } else {
+            mSpeechInputManager.startListening();
+        }
+    }
+
+    private void onRootToggleClicked() {
+        if (mRootToggleManager == null) return;
+        boolean enable = !mRootToggleManager.isRootEnabled();
+        mRootToggleManager.toggleRoot(enable, new RootToggleManager.RootCallback() {
+            @Override public void onRootGranted() {
+                runOnUiThread(() -> {
+                    updateRootButtonState(true);
+                    showToast("Root access enabled", false);
+                });
+            }
+            @Override public void onRootDenied(String reason) {
+                runOnUiThread(() -> {
+                    updateRootButtonState(false);
+                    showToast(reason, true);
+                });
+            }
+            @Override public void onRootStateChanged(boolean isRoot) {
+                runOnUiThread(() -> {
+                    updateRootButtonState(isRoot);
+                    showToast(isRoot ? "Root enabled" : "Root disabled", false);
+                });
+            }
+        });
+    }
+
+    private void updateSTTButtonState(boolean isListening) {
+        if (mBtnSTT == null) return;
+        mBtnSTT.setImageResource(isListening ? R.drawable.ic_mic_off : R.drawable.ic_mic);
+        int color = getResources().getColor(
+            isListening ? R.color.nt_stt_listening : R.color.nt_stt_idle, getTheme());
+        mBtnSTT.setColorFilter(color);
+    }
+
+    private void updateRootButtonState(boolean isRoot) {
+        if (mBtnRootToggle == null) return;
+        int color = getResources().getColor(
+            isRoot ? R.color.nt_root_active : R.color.nt_root_inactive, getTheme());
+        mBtnRootToggle.setColorFilter(color);
+    }
+
+    private void insertSpeechTextToTerminal(String text) {
+        if (text == null || text.isEmpty()) return;
+        // Check autocorrect for known command typos
+        String corrected = mAutoCorrectHandler != null
+            ? mAutoCorrectHandler.getCommandCorrection(text) : null;
+        String toInsert = corrected != null ? corrected : text;
+        // Write to the active terminal session
+        TerminalSession session = getCurrentSession();
+        if (session != null) {
+            byte[] bytes = toInsert.getBytes();
+            session.write(bytes, 0, bytes.length);
+        }
+    }
+
+    // -----------------------------------------------------------------------------------------
 
     private void setSettingsButtonView() {
         ImageButton settingsButton = findViewById(R.id.settings_button);
@@ -804,6 +946,12 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         Logger.logVerbose(LOG_TAG, "onRequestPermissionsResult: requestCode: " + requestCode + ", permissions: "  + Arrays.toString(permissions) + ", grantResults: "  + Arrays.toString(grantResults));
         if (requestCode == PermissionUtils.REQUEST_GRANT_STORAGE_PERMISSION) {
             requestStoragePermission(true);
+        } else if (requestCode == REQUEST_RECORD_AUDIO) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (mSpeechInputManager != null) mSpeechInputManager.startListening();
+            } else {
+                showToast("Microphone permission required for speech input", false);
+            }
         }
     }
 
