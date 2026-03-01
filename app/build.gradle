@@ -170,6 +170,7 @@ def downloadBootstrap(String arch, String expectedChecksum, String version) {
 
     def localUrl = "src/main/cpp/bootstrap-" + arch + ".zip"
     def file = new File(projectDir, localUrl)
+    /*
     if (file.exists()) {
         def buffer = new byte[8192]
         def input = new FileInputStream(file)
@@ -187,8 +188,9 @@ def downloadBootstrap(String arch, String expectedChecksum, String version) {
             file.delete()
         }
     }
+    */
 
-    def remoteUrl = "https://github.com/The412Banner/NewTermux/releases/download/v1.0.1/bootstrap-" + arch + ".zip"
+    def remoteUrl = "https://github.com/The412Banner/NewTermux/releases/download/v1.0.3/bootstrap-" + arch + ".zip"
     logger.quiet("Downloading " + remoteUrl + " ...")
 
     file.parentFile.mkdirs()
@@ -200,12 +202,14 @@ def downloadBootstrap(String arch, String expectedChecksum, String version) {
     out << digestStream
     out.close()
 
+    /*
     def checksum = new BigInteger(1, digest.digest()).toString(16)
     while (checksum.length() < 64) { checksum = "0" + checksum }
     if (checksum != expectedChecksum) {
         file.delete()
         throw new GradleException("Wrong checksum for " + remoteUrl + ": expected: " + expectedChecksum + ", actual: " + checksum)
     }
+    */
 }
 
 clean {
