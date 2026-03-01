@@ -36,12 +36,49 @@ jobs:
           NEW_PKG="com.newtermux.app"
           OLD_PREFIX="/data/data/${OLD_PKG}/files"
           NEW_PREFIX="/data/data/${NEW_PKG}/files"
+          
           mkdir -p extract
           unzip -q "bootstrap-${ARCH}.zip" -d extract/
           cd extract
-          if [ -f SYMLINKS.txt ]; then sed -i "s|${OLD_PREFIX}|${NEW_PREFIX}|g" SYMLINKS.txt; fi
-          find . -type f -print0 | xargs -0 grep -lF "$OLD_PREFIX" 2>/dev/null | xargs -0 sed -i "s|${OLD_PREFIX}|${NEW_PREFIX}|g" 2>/dev/null || true
-          find . -type f | while read f; do if file "$f" | grep -q 'ELF'; then RPATH=$(patchelf --print-rpath "$f" 2>/dev/null || true); if echo "$RPATH" | grep -qF "$OLD_PKG"; then NEW_RPATH=$(echo "$RPATH" | sed "s|${OLD_PREFIX}|${NEW_PREFIX}|g"); patchelf --set-rpath "$NEW_RPATH" "$f" 2>/dev/null || true; fi; fi; done
+          
+          # 1. Patch SYMLINKS.txt
+          if [ -f SYMLINKS.txt ]; then 
+            sed -i "s|${OLD_PREFIX}|${NEW_PREFIX}|g" SYMLINKS.txt
+          fi
+          
+          # 2. Patch Files
+          echo "Starting deep patch..."
+          find . -type f | while read f; do
+            if file "$f" | grep -q 'ELF'; then
+              # ELF binary: use patchelf (safe for length changes)
+              # Patch Interpreter (Dynamic Linker)
+              INTERP=$(patchelf --print-interpreter "$f" 2>/dev/null || true)
+              if [ -n "$INTERP" ] && echo "$INTERP" | grep -qF "$OLD_PKG"; then
+                NEW_INTERP=$(echo "$INTERP" | sed "s|${OLD_PKG}|${NEW_PKG}|g")
+                patchelf --set-interpreter "$NEW_INTERP" "$f" 2>/dev/null || true
+              fi
+              # Patch RPATH
+              RPATH=$(patchelf --print-rpath "$f" 2>/dev/null || true)
+              if [ -n "$RPATH" ] && echo "$RPATH" | grep -qF "$OLD_PKG"; then
+                NEW_RPATH=$(echo "$RPATH" | sed "s|${OLD_PKG}|${NEW_PKG}|g")
+                patchelf --set-rpath "$NEW_RPATH" "$f" 2>/dev/null || true
+              fi
+            else
+              # Non-ELF (likely script or config): use sed
+              # Note: This is only safe for text files.
+              if file "$f" | grep -qE 'text|script'; then
+                sed -i "s|${OLD_PREFIX}|${NEW_PREFIX}|g" "$f" 2>/dev/null || true
+                sed -i "s|${OLD_PKG}|${NEW_PKG}|g" "$f" 2>/dev/null || true
+              fi
+            fi
+          done
+          
+          # 3. Debug check
+          if [ -f bin/login ]; then
+            echo "Interpreter for bin/login:"
+            patchelf --print-interpreter bin/login || echo "No interpreter"
+          fi
+          
           # 4. Ensure execution permissions
           find bin libexec -type f -exec chmod +x {} + 2>/dev/null || true
           find usr/bin usr/libexec -type f -exec chmod +x {} + 2>/dev/null || true

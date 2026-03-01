@@ -64,25 +64,6 @@
                         android:layout_width="0dp"
                         android:layout_height="1dp"
                         android:layout_weight="1" />
-                    <!-- Speech-to-Text button -->
-                    <ImageButton
-                        android:id="@+id/btn_stt"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_mic"
-                        android:background="@null"
-                        android:contentDescription="Speech to Text"
-                        android:tint="@color/nt_stt_idle" />
-                    <!-- Root Toggle button -->
-                    <ImageButton
-                        android:id="@+id/btn_root_toggle"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_root_toggle"
-                        android:background="@null"
-                        android:contentDescription="Toggle Root"
-                        android:tint="@color/nt_root_inactive"
-                        android:visibility="gone" />
                 </LinearLayout>
 
                 <ListView
