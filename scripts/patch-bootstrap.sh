@@ -2,57 +2,52 @@
 set -e
 
 ARCH=$1
-OLD_USR="/data/data/com.termux/files/usr"
-NEW_USR="/data/data/com.newtermux.app/u"
-OLD_HOME="/data/data/com.termux/files/home"
-NEW_HOME="/data/data/com.newtermux.app//h"
+OLD_ID="com.termux"
+NEW_ID="com.newtermux.app"
+OLD_PREFIX="/data/data/com.termux/files/usr"
+NEW_PREFIX="/data/data/com.newtermux.app/files/usr"
 
 mkdir -p extract
 unzip -q "bootstrap-${ARCH}.zip" -d extract/
 cd extract
 
-# 1. Text patch (scripts, configs)
-# sed is safe for text files even if length changes, but we use the same paths for consistency.
-echo "Patching scripts and configs..."
-find . -type f | while read f; do
-  if file "$f" | grep -qE 'text|script'; then
-    sed -i "s|${OLD_USR}|${NEW_USR}|g" "$f" 2>/dev/null || true
-    sed -i "s|${OLD_HOME}|${NEW_HOME}|g" "$f" 2>/dev/null || true
-    sed -i "s|com.termux|com.newtermux.app|g" "$f" 2>/dev/null || true
-    sed -i "s|Termux|NewTermux|g" "$f" 2>/dev/null || true
-  fi
-done
+echo "1. Patching text files and shebangs for ${ARCH}..."
+# Fix shebangs and other text occurrences
+# We search for the old package ID in all files that look like text/scripts
+grep -rIl "$OLD_ID" . | xargs sed -i "s|$OLD_ID|$NEW_ID|g" || true
 
-# 2. Binary patch using fixed-length replacement
-echo "Patching binaries safely (Fixed-Length Strategy)..."
-python3 ../scripts/patch-binary.py
-
-# 3. ELF header patch
-# Double-check important headers with patchelf.
-echo "Verifying ELF headers..."
+echo "2. Patching ELF binaries for ${ARCH}..."
+# Find all ELF files
 find . -type f | while read f; do
-  if file "$f" | grep -q 'ELF'; then
-    # The binary patcher already updated these strings, but let's ensure patchelf sees them.
-    # Note: patchelf is used here mainly for verification or fixing if binary patch missed something.
-    INTERP=$(patchelf --print-interpreter "$f" 2>/dev/null || true)
-    if [ -n "$INTERP" ] && echo "$INTERP" | grep -qF "com.termux"; then
-       # Fallback if python script missed it
-       NEW_INTERP=$(echo "$INTERP" | sed "s|${OLD_USR}|${NEW_USR}|g")
-       patchelf --set-interpreter "$NEW_INTERP" "$f" 2>/dev/null || true
+    if file "$f" | grep -q 'ELF'; then
+        # Update RPATH
+        OLD_RPATH=$(patchelf --print-rpath "$f" 2>/dev/null || true)
+        if [ -n "$OLD_RPATH" ]; then
+            NEW_RPATH=$(echo "$OLD_RPATH" | sed "s|$OLD_ID|$NEW_ID|g")
+            patchelf --set-rpath "$NEW_RPATH" "$f" 2>/dev/null || true
+        fi
+        
+        # Update Interpreter (dynamic linker path)
+        OLD_INTERP=$(patchelf --print-interpreter "$f" 2>/dev/null || true)
+        if [ -n "$OLD_INTERP" ] && echo "$OLD_INTERP" | grep -q "$OLD_ID"; then
+            NEW_INTERP=$(echo "$OLD_INTERP" | sed "s|$OLD_ID|$NEW_ID|g")
+            patchelf --set-interpreter "$NEW_INTERP" "$f" 2>/dev/null || true
+        fi
     fi
-  fi
 done
 
-# 4. MOTD fix
-if [ -f etc/motd ]; then
-  echo "Welcome to NewTermux!" > etc/motd
+echo "3. Updating SYMLINKS.txt for ${ARCH}..."
+if [ -f SYMLINKS.txt ]; then
+    sed -i "s|$OLD_ID|$NEW_ID|g" SYMLINKS.txt
 fi
 
-# 5. Permissions
-find bin libexec -type f -exec chmod +x {} + 2>/dev/null || true
-find usr/bin usr/libexec -type f -exec chmod +x {} + 2>/dev/null || true
+echo "4. MOTD update for ${ARCH}..."
+if [ -f etc/motd ]; then
+    echo "Welcome to NewTermux!" > etc/motd
+fi
 
-# 6. Repack
+echo "5. Repacking ${ARCH}..."
 zip -q -r "../bootstrap-${ARCH}.zip" .
 cd ..
-echo "Repacked bootstrap-${ARCH}.zip"
+rm -rf extract
+echo "Done! Patched bootstrap-${ARCH}.zip for NewTermux."
