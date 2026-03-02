@@ -31,9 +31,10 @@ grep -rIl "$OLD_ID" . | while read f; do
     fi
 done
 
-echo "3. Patching ELF binaries (Surgical Shortcut Strategy)..."
+echo "3. Patching ELF binaries (Surgical Shortcut Strategy v2)..."
 # We only patch the USR path in binaries because lengths match exactly (31 chars).
-# We avoid patching HOME in binaries to prevent corruption from length mismatch.
+# We use a regex to ONLY replace occurrences that look like actual paths (followed by / or \0).
+# This avoids corrupting the dynamic section or hash tables.
 find . -type f | while read f; do
     if file "$f" | grep -qE 'ELF|executable|shared object'; then
         
@@ -55,16 +56,27 @@ find . -type f | while read f; do
         fi
 
         # B) Use a surgical python script for internal string constants.
-        # This only replaces the USR path where length is identical.
+        # This only replaces the USR path where length is identical AND it looks like a path.
         python3 -c "
 import sys
-with open('$f', 'rb') as f:
-    data = f.read()
-# Replace only if length matches exactly to avoid corruption
-updated = data.replace(b'$OLD_USR', b'$NEW_USR_SHORT')
+import re
+
+path = '$f'
+old_usr = b'$OLD_USR'
+new_usr = b'$NEW_USR_SHORT'
+
+with open(path, 'rb') as f_in:
+    data = f_in.read()
+
+# Pattern: OLD_USR followed by a null byte or a slash
+# This avoids hitting random binary data in hash tables
+pattern = re.compile(re.escape(old_usr) + b'([\x00/])')
+updated = pattern.sub(new_usr + b'\\1', data)
+
 if updated != data:
-    with open('$f', 'wb') as f:
-        f.write(updated)
+    with open(path, 'wb') as f_out:
+        f_out.write(updated)
+        print(f'Surgically patched: {path}')
 "
     fi
 done
@@ -76,7 +88,7 @@ fi
 
 echo "5. MOTD update..."
 if [ -f etc/motd ]; then
-    echo "Welcome to NewTermux (Robust Patch v2)!" > etc/motd
+    echo "Welcome to NewTermux (Stable Patch v2)!" > etc/motd
 fi
 
 echo "6. Repacking ${ARCH}..."
