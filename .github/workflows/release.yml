@@ -28,25 +28,15 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Decode release keystore
-        run: |
-          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > ${{ github.workspace }}/app/newtermux-release.jks
-
-      - name: Build signed release APK
-        env:
-          RELEASE_KEYSTORE_PATH: ${{ github.workspace }}/app/newtermux-release.jks
-          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-          TERMUX_SPLIT_APKS_FOR_RELEASE_BUILDS: "1"
+      - name: Build APKs
         run: |
           chmod +x ./gradlew
-          ./gradlew downloadBootstraps assembleRelease
+          ./gradlew assembleDebug
 
-      - name: Upload signed APK to release
+      - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: app/build/outputs/apk/release/*.apk
+          files: app/build/outputs/apk/debug/*.apk
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           prerelease: false
           generate_release_notes: false
