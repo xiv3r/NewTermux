@@ -475,6 +475,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         // Update the {@link TerminalSession} and {@link TerminalEmulator} clients.
         mTermuxService.setTermuxTerminalSessionClient(mTermuxTerminalSessionActivityClient);
+
+        // Now that the service is connected and sessions exist, populate the session chips.
+        updateSessionTabs();
     }
 
     @Override
