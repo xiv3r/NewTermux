@@ -21,11 +21,11 @@
 
         <!-- Critical Termux Attributes to prevent InflateException -->
         <item name="android:windowActionModeOverlay">true</item>
-        <item name="termuxActivityDrawerBackground">@color/nt_background</item>
-        <item name="termuxActivityDrawerImageTint">@color/nt_on_background</item>
+        <item name="termuxActivityDrawerBackground">@color/nt_surface</item>
+        <item name="termuxActivityDrawerImageTint">@color/nt_on_surface</item>
         <item name="extraKeysButtonTextColor">@color/nt_terminal_fg</item>
         <item name="extraKeysButtonActiveTextColor">@color/nt_primary</item>
-        <item name="extraKeysButtonBackgroundColor">@color/nt_background</item>
+        <item name="extraKeysButtonBackgroundColor">@color/nt_terminal_bg</item>
         <item name="extraKeysButtonActiveBackgroundColor">@color/nt_surface_variant</item>
     </style>
 
