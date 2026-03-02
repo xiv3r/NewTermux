@@ -652,6 +652,18 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             });
         }
 
+        android.widget.TextView btnAC = findViewById(R.id.btn_autocorrect_toggle);
+        if (btnAC != null) {
+            btnAC.setOnClickListener(v -> {
+                boolean nowEnabled = !mTerminalView.isKeyboardSuggestionsEnabled();
+                mTerminalView.setKeyboardSuggestionsEnabled(nowEnabled);
+                if (mAutoCorrectHandler != null) mAutoCorrectHandler.setEnabled(nowEnabled);
+                int color = getResources().getColor(
+                    nowEnabled ? R.color.nt_primary : R.color.nt_on_surface, getTheme());
+                btnAC.setTextColor(color);
+            });
+        }
+
         ImageButton btnNewSession = findViewById(R.id.btn_new_session);
         if (btnNewSession != null) {
             btnNewSession.setOnClickListener(v -> {

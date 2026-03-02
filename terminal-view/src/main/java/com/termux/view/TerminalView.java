@@ -63,6 +63,7 @@ public final class TerminalView extends View {
     private TerminalCursorBlinkerRunnable mTerminalCursorBlinkerRunnable;
     private int mTerminalCursorBlinkerRate;
     private boolean mCursorInvisibleIgnoreOnce;
+    private boolean mKeyboardSuggestionsEnabled = true;
     public static final int TERMINAL_CURSOR_BLINK_RATE_MIN = 100;
     public static final int TERMINAL_CURSOR_BLINK_RATE_MAX = 2000;
 
@@ -271,6 +272,19 @@ public final class TerminalView extends View {
         this.mClient = client;
     }
 
+    public boolean isKeyboardSuggestionsEnabled() {
+        return mKeyboardSuggestionsEnabled;
+    }
+
+    public void setKeyboardSuggestionsEnabled(boolean enabled) {
+        mKeyboardSuggestionsEnabled = enabled;
+        // Restart the IME so it picks up the new inputType immediately.
+        android.view.inputmethod.InputMethodManager imm =
+            (android.view.inputmethod.InputMethodManager) getContext()
+                .getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+        if (imm != null) imm.restartInput(this);
+    }
+
     /**
      * Sets whether terminal view key logging is enabled or not.
      *
@@ -320,10 +334,13 @@ public final class TerminalView extends View {
                 // https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:packages/inputmethods/LatinIME/java/src/com/android/inputmethod/latin/InputAttributes.java;l=79
                 outAttrs.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
             } else {
-                // NewTermux: Enable keyboard suggestions and autocorrect like a text field.
-                // TYPE_CLASS_TEXT + AUTO_CORRECT tells the IME to show its suggestion strip.
-                // commitText() and deleteSurroundingText() already handle autocorrect replacements.
-                outAttrs.inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT;
+                if (mKeyboardSuggestionsEnabled) {
+                    // NewTermux: keyboard suggestion strip + autocorrect, like a text field.
+                    outAttrs.inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT;
+                } else {
+                    // Original raw input — no keyboard suggestions.
+                    outAttrs.inputType = InputType.TYPE_NULL;
+                }
             }
         } else {
             // Corresponds to android:inputType="text"
