@@ -645,6 +645,13 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             });
         }
 
+        ImageButton btnSettings = findViewById(R.id.btn_settings);
+        if (btnSettings != null) {
+            btnSettings.setOnClickListener(v -> {
+                ActivityUtils.startActivity(this, new Intent(this, SettingsActivity.class));
+            });
+        }
+
         ImageButton btnNewSession = findViewById(R.id.btn_new_session);
         if (btnNewSession != null) {
             btnNewSession.setOnClickListener(v -> {
@@ -704,6 +711,15 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             chip.setOnClickListener(v -> {
                 if (mTermuxTerminalSessionActivityClient != null) {
                     mTermuxTerminalSessionActivityClient.setCurrentSession(session);
+                    updateSessionTabs();
+                }
+            });
+
+            chip.setCloseIconVisible(true);
+            chip.setOnCloseIconClickListener(v -> {
+                if (mTermuxTerminalSessionActivityClient != null) {
+                    session.finishIfRunning();
+                    mTermuxTerminalSessionActivityClient.removeFinishedSession(session);
                     updateSessionTabs();
                 }
             });
