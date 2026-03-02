@@ -512,6 +512,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         // Set termux terminal view
         mTerminalView = findViewById(R.id.terminal_view);
         mTerminalView.setTerminalViewClient(mTermuxTerminalViewClient);
+        applyModernTerminalColors();
 
         if (mTermuxTerminalViewClient != null)
             mTermuxTerminalViewClient.onCreate();
@@ -589,6 +590,42 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     // -----------------------------------------------------------------------------------------
     // NewTermux Features: Speech-to-Text, Root Toggle, AutoCorrect
     // -----------------------------------------------------------------------------------------
+
+    private void applyModernTerminalColors() {
+        // Material Deep Ocean Palette
+        int bgColor = ContextCompat.getColor(this, R.color.nt_terminal_bg);
+        int fgColor = ContextCompat.getColor(this, R.color.nt_terminal_fg);
+        int cursorColor = ContextCompat.getColor(this, R.color.nt_terminal_cursor);
+        int selectionColor = ContextCompat.getColor(this, R.color.nt_terminal_selection);
+
+        // Apply colors to TerminalView
+        mTerminalView.setTextSize(mPreferences.getFontSize());
+        
+        // Load JetBrains Mono if user hasn't provided a font
+        java.io.File fontFile = new java.io.File(TermuxConstants.TERMUX_FONT_FILE_PATH);
+        if (!fontFile.exists()) {
+            try {
+                android.graphics.Typeface jetbrainsMono = android.graphics.Typeface.createFromAsset(getAssets(), "font.ttf");
+                mTerminalView.setTypeface(jetbrainsMono);
+            } catch (Exception e) {
+                Logger.logError(LOG_TAG, "Failed to load JetBrains Mono font: " + e.getMessage());
+            }
+        }
+
+        // We set these as defaults, user color.properties will still override if they exist
+        mTerminalView.mEmulator.mColors.mCurrentColors[com.termux.terminal.TerminalColors.COLOR_INDEX_BACKGROUND] = bgColor;
+        mTerminalView.mEmulator.mColors.mCurrentColors[com.termux.terminal.TerminalColors.COLOR_INDEX_FOREGROUND] = fgColor;
+        mTerminalView.mEmulator.mColors.mCurrentColors[com.termux.terminal.TerminalColors.COLOR_INDEX_CURSOR] = cursorColor;
+        
+        // Set selection color
+        try {
+            java.lang.reflect.Field field = com.termux.view.TerminalView.class.getDeclaredField("mSelectionColor");
+            field.setAccessible(true);
+            field.set(mTerminalView, selectionColor);
+        } catch (Exception e) {
+            Logger.logError(LOG_TAG, "Failed to set selection color: " + e.getMessage());
+        }
+    }
 
     private void setupNewTermuxFeatures() {
         // Initialize managers
