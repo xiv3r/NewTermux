@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="Accent Color">
+
+        <Preference app:key="color_purple"  app:title="🟣 Purple (Default)" />
+        <Preference app:key="color_blue"    app:title="🔵 Blue" />
+        <Preference app:key="color_green"   app:title="🟢 Green" />
+        <Preference app:key="color_orange"  app:title="🟠 Orange" />
+        <Preference app:key="color_red"     app:title="🔴 Red" />
+        <Preference app:key="color_teal"    app:title="🩵 Teal" />
+        <Preference app:key="color_pink"    app:title="🩷 Pink" />
+        <Preference app:key="color_gold"    app:title="🟡 Gold" />
+        <Preference app:key="color_white"   app:title="⚪ White" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

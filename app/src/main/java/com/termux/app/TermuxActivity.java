@@ -72,6 +72,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 
 import com.newtermux.features.AutoCorrectHandler;
+import com.newtermux.features.NewTermuxTheme;
 import com.newtermux.features.RootToggleManager;
 import com.newtermux.features.SpeechInputManager;
 
@@ -346,6 +347,24 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         TermuxCrashUtils.notifyAppCrashFromCrashLogFile(this, LOG_TAG);
 
         mIsOnResumeAfterOnCreate = false;
+        applyAccentColor();
+    }
+
+    private void applyAccentColor() {
+        int color = NewTermuxTheme.getAccentColor(this);
+
+        // AC toggle button
+        android.widget.TextView btnAC = findViewById(R.id.btn_autocorrect_toggle);
+        if (btnAC != null) {
+            boolean acOn = mTerminalView != null && mTerminalView.isKeyboardSuggestionsEnabled();
+            btnAC.setTextColor(acOn ? color : getResources().getColor(R.color.nt_on_surface, getTheme()));
+        }
+
+        // STT button (idle state)
+        if (mBtnSTT != null) mBtnSTT.setColorFilter(color);
+
+        // Session chips
+        updateSessionTabs();
     }
 
     @Override
@@ -717,7 +736,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             chip.setTag(termuxSession);
             
             // Modern Material 3 style (can be refined in XML later)
-            chip.setChipBackgroundColorResource(session == currentSession ? R.color.nt_tab_active : R.color.nt_tab_inactive);
+            int accentColor = NewTermuxTheme.getAccentColor(this);
+            int chipColor = session == currentSession ? accentColor : getResources().getColor(R.color.nt_tab_inactive, getTheme());
+            chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(chipColor));
             chip.setTextColor(getResources().getColor(android.R.color.white));
 
             chip.setOnClickListener(v -> {

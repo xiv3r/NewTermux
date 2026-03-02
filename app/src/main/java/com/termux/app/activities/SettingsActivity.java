@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.newtermux.features.NewTermuxTheme;
+
 import com.termux.R;
 import com.termux.shared.activities.ReportActivity;
 import com.termux.shared.file.FileUtils;
@@ -160,6 +162,39 @@ public class SettingsActivity extends AppCompatActivity {
 
                 donatePreference.setOnPreferenceClickListener(preference -> {
                     ShareUtils.openUrl(context, TermuxConstants.TERMUX_DONATE_URL);
+                    return true;
+                });
+            }
+        }
+    }
+
+    public static class AppearancePreferencesFragment extends PreferenceFragmentCompat {
+
+        private static final int[] COLOR_VALUES = NewTermuxTheme.COLORS;
+        private static final String[] COLOR_KEYS = {
+            "color_purple", "color_blue", "color_green", "color_orange",
+            "color_red", "color_teal", "color_pink", "color_gold", "color_white"
+        };
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.newtermux_appearance_preferences, rootKey);
+            Context context = getContext();
+            if (context == null) return;
+
+            int current = NewTermuxTheme.getAccentColor(context);
+
+            for (int i = 0; i < COLOR_KEYS.length; i++) {
+                final int color = COLOR_VALUES[i];
+                Preference pref = findPreference(COLOR_KEYS[i]);
+                if (pref == null) continue;
+                if (color == current) pref.setSummary("✓ Active");
+                pref.setOnPreferenceClickListener(preference -> {
+                    NewTermuxTheme.setAccentColor(context, color);
+                    for (int j = 0; j < COLOR_KEYS.length; j++) {
+                        Preference p = findPreference(COLOR_KEYS[j]);
+                        if (p != null) p.setSummary(COLOR_VALUES[j] == color ? "✓ Active" : null);
+                    }
                     return true;
                 });
             }
