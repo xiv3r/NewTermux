@@ -71,6 +71,8 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
 
     private List<KeyboardShortcut> mSessionShortcuts;
 
+    private final StringBuilder mCurrentCommand = new StringBuilder();
+
     private static final String LOG_TAG = "TermuxTerminalViewClient";
 
     public TermuxTerminalViewClient(TermuxActivity activity, TermuxTerminalSessionActivityClient termuxTerminalSessionActivityClient) {
@@ -239,6 +241,10 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     @SuppressLint("RtlHardcoded")
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent e, TerminalSession currentSession) {
+        if (keyCode == KeyEvent.KEYCODE_ENTER) {
+            mCurrentCommand.setLength(0);
+            mActivity.checkForAutocorrect(null);
+        }
         if (handleVirtualKeys(keyCode, e, true)) return true;
 
         if (keyCode == KeyEvent.KEYCODE_ENTER && !currentSession.isRunning()) {
@@ -359,6 +365,16 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
 
     @Override
     public boolean onCodePoint(final int codePoint, boolean ctrlDown, TerminalSession session) {
+        if (!ctrlDown && !mVirtualControlKeyDown && !mVirtualFnKeyDown) {
+            if (Character.isLetterOrDigit(codePoint) || codePoint == '-' || codePoint == '_') {
+                mCurrentCommand.append((char) codePoint);
+            } else if (Character.isWhitespace(codePoint)) {
+                if (mCurrentCommand.length() > 0) {
+                    mActivity.checkForAutocorrect(mCurrentCommand.toString());
+                }
+                mCurrentCommand.setLength(0);
+            }
+        }
         if (mVirtualFnKeyDown) {
             int resultingKeyCode = -1;
             int resultingCodePoint = -1;

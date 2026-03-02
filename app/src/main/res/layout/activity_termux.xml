@@ -8,6 +8,7 @@
     android:fitsSystemWindows="true">
 
     <include layout="@layout/newtermux_toolbar" />
+    <include layout="@layout/newtermux_autocorrect_bar" />
 
     <RelativeLayout
         android:id="@+id/activity_termux_root_relative_layout"

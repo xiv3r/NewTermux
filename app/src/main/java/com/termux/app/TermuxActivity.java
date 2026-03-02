@@ -189,6 +189,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private SpeechInputManager mSpeechInputManager;
     private RootToggleManager mRootToggleManager;
     private AutoCorrectHandler mAutoCorrectHandler;
+    private View mAutocorrectBar;
+    private TextView mAutocorrectText;
+    private String mPendingCorrection;
+    private String mPendingOriginal;
     private ImageButton mBtnSTT;
     private ImageButton mBtnRootToggle;
     private com.google.android.material.chip.ChipGroup mSessionChipGroup;
@@ -596,6 +600,14 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         mRootToggleManager = RootToggleManager.getInstance();
         mAutoCorrectHandler = new AutoCorrectHandler(this);
 
+        // Autocorrect UI
+        mAutocorrectBar = findViewById(R.id.autocorrect_bar);
+        mAutocorrectText = findViewById(R.id.autocorrect_text);
+        View btnApply = findViewById(R.id.autocorrect_apply_button);
+        View btnClose = findViewById(R.id.autocorrect_close_button);
+        if (btnApply != null) btnApply.setOnClickListener(v -> applyAutocorrect());
+        if (btnClose != null) btnClose.setOnClickListener(v -> hideAutocorrectBar());
+
         // Wire toolbar buttons
         mBtnSTT = findViewById(R.id.btn_stt);
         if (mBtnSTT != null) {
@@ -716,6 +728,51 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         } else {
             mSpeechInputManager.startListening();
         }
+    }
+
+    public void checkForAutocorrect(String text) {
+        if (mAutoCorrectHandler == null || text == null || text.isEmpty()) return;
+        String corrected = mAutoCorrectHandler.getCommandCorrection(text);
+        if (corrected != null && !corrected.equals(text)) {
+            mPendingCorrection = corrected;
+            mPendingOriginal = text;
+            runOnUiThread(() -> {
+                if (mAutocorrectBar != null && mAutocorrectText != null) {
+                    mAutocorrectText.setText("Did you mean: " + corrected + "?");
+                    mAutocorrectBar.setVisibility(View.VISIBLE);
+                }
+            });
+        } else {
+            // If it's a small word or we are done typing, maybe keep it.
+            // For now, only hide if no correction found
+            if (text.length() > 3) hideAutocorrectBar();
+        }
+    }
+
+    private void applyAutocorrect() {
+        if (mPendingCorrection == null || mPendingOriginal == null) return;
+        TerminalSession session = getCurrentSession();
+        if (session != null) {
+            // Send backspaces to delete the original word and the trailing space
+            StringBuilder backspaces = new StringBuilder();
+            for (int i = 0; i < mPendingOriginal.length() + 1; i++) {
+                backspaces.append('\177'); // DEL character for backspace
+            }
+            byte[] bsBytes = backspaces.toString().getBytes();
+            session.write(bsBytes, 0, bsBytes.length);
+
+            // Send the corrected command
+            byte[] bytes = mPendingCorrection.getBytes();
+            session.write(bytes, 0, bytes.length);
+        }
+        hideAutocorrectBar();
+    }
+
+    private void hideAutocorrectBar() {
+        mPendingCorrection = null;
+        runOnUiThread(() -> {
+            if (mAutocorrectBar != null) mAutocorrectBar.setVisibility(View.GONE);
+        });
     }
 
     private void onRootToggleClicked() {
