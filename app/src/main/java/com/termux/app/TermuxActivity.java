@@ -613,9 +613,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
 
         // We set these as defaults, user color.properties will still override if they exist
-        mTerminalView.mEmulator.mColors.mCurrentColors[com.termux.terminal.TextStyle.COLOR_INDEX_BACKGROUND] = bgColor;
-        mTerminalView.mEmulator.mColors.mCurrentColors[com.termux.terminal.TextStyle.COLOR_INDEX_FOREGROUND] = fgColor;
-        mTerminalView.mEmulator.mColors.mCurrentColors[com.termux.terminal.TextStyle.COLOR_INDEX_CURSOR] = cursorColor;
+        mTerminalView.mEmulator.mColors.mCurrentColors[com.termux.terminal.TerminalColors.COLOR_INDEX_BACKGROUND] = bgColor;
+        mTerminalView.mEmulator.mColors.mCurrentColors[com.termux.terminal.TerminalColors.COLOR_INDEX_FOREGROUND] = fgColor;
+        mTerminalView.mEmulator.mColors.mCurrentColors[com.termux.terminal.TerminalColors.COLOR_INDEX_CURSOR] = cursorColor;
         
         // Set selection color
         try {
@@ -740,7 +740,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
     }
 
-    public void onSTTButtonClicked() {
+    private void onSTTButtonClicked() {
         if (mSpeechInputManager == null) return;
         if (mSpeechInputManager.isListening()) {
             mSpeechInputManager.stopListening();
