@@ -44,10 +44,10 @@ public class NewTermuxSettings {
         return prefs(ctx).getBoolean(KEY_SHOW_CLEAR_BUTTON, true);
     }
     public static boolean isZshAutosuggestionsEnabled(Context ctx) {
-        return prefs(ctx).getBoolean(KEY_ZSH_AUTOSUGGESTIONS, true);
+        return prefs(ctx).getBoolean(KEY_ZSH_AUTOSUGGESTIONS, false);
     }
     public static boolean isZshSyntaxHighlightingEnabled(Context ctx) {
-        return prefs(ctx).getBoolean(KEY_ZSH_SYNTAX_HIGHLIGHTING, true);
+        return prefs(ctx).getBoolean(KEY_ZSH_SYNTAX_HIGHLIGHTING, false);
     }
     public static boolean isSessionTabsEnabled(Context ctx) {
         return prefs(ctx).getBoolean(KEY_SESSION_TABS, true);
