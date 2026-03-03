@@ -37,4 +37,11 @@ public class NewTermuxTheme {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit().putInt(KEY_ACCENT_COLOR, color).apply();
     }
+
+    /** Returns true if the current accent_color doesn't match any of the 9 presets. */
+    public static boolean isCustomAccentActive(Context context) {
+        int cur = getAccentColor(context);
+        for (int c : COLORS) if (c == cur) return false;
+        return true;
+    }
 }

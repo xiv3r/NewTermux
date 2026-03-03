@@ -19,8 +19,10 @@ public class NewTermuxColorTheme {
     private static final String KEY_THEME = "selected_theme";
     public static final String DEFAULT_THEME = "default_dark";
 
+    public static final String THEME_KEY_CUSTOM = "custom";
+
     public static final String[] THEME_KEYS = {
-        "default_dark", "rgui", "amber", "low_contrast", "solarized_dark", "dracula"
+        "default_dark", "rgui", "amber", "low_contrast", "solarized_dark", "dracula", "custom"
     };
 
     public static final String[] THEME_NAMES = {
@@ -188,5 +190,34 @@ public class NewTermuxColorTheme {
             case "dracula":       return THEME_DRACULA;
             default:              return THEME_DEFAULT_DARK;
         }
+    }
+
+    /**
+     * Saves custom theme content to prefs, sets active theme to "custom",
+     * and writes colors.properties.
+     */
+    public static void applyCustomTheme(Context ctx, String content) {
+        ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString("custom_theme_content", content)
+            .putString(KEY_THEME, THEME_KEY_CUSTOM)
+            .apply();
+        writeColorsFileRaw(content);
+    }
+
+    /**
+     * Returns saved custom theme content, or THEME_DEFAULT_DARK as a starting seed.
+     */
+    public static String getCustomThemeContent(Context ctx) {
+        return ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString("custom_theme_content", THEME_DEFAULT_DARK);
+    }
+
+    static void writeColorsFileRaw(String content) {
+        File dir = TermuxConstants.TERMUX_COLOR_PROPERTIES_FILE.getParentFile();
+        if (dir != null && !dir.exists()) dir.mkdirs();
+        try (FileWriter fw = new FileWriter(TermuxConstants.TERMUX_COLOR_PROPERTIES_FILE)) {
+            fw.write(content);
+        } catch (IOException ignored) {}
     }
 }

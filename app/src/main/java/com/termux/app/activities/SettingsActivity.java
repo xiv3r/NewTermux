@@ -21,9 +21,19 @@ import androidx.preference.SwitchPreferenceCompat;
 
 import com.termux.app.TermuxInstaller;
 
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.view.LayoutInflater;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.newtermux.features.ColorPickerDialog;
 import com.newtermux.features.NewTermuxColorTheme;
 import com.newtermux.features.NewTermuxSettings;
 import com.newtermux.features.NewTermuxTheme;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.termux.R;
 import com.termux.shared.activities.ReportActivity;
@@ -492,24 +502,39 @@ public class SettingsActivity extends AppCompatActivity {
             Context context = getContext();
             if (context == null) return;
 
-            // --- Terminal Theme ---
+            // --- Terminal Theme (presets) ---
             String currentTheme = NewTermuxColorTheme.getCurrentTheme(context);
             for (String themeKey : NewTermuxColorTheme.THEME_KEYS) {
+                if (NewTermuxColorTheme.THEME_KEY_CUSTOM.equals(themeKey)) continue;
                 final String key = themeKey;
                 Preference pref = findPreference("theme_" + key);
                 if (pref == null) continue;
                 if (key.equals(currentTheme)) pref.setSummary("✓ Active");
                 pref.setOnPreferenceClickListener(preference -> {
                     NewTermuxColorTheme.applyTheme(context, key);
-                    for (String k : NewTermuxColorTheme.THEME_KEYS) {
-                        Preference p = findPreference("theme_" + k);
-                        if (p != null) p.setSummary(k.equals(key) ? "✓ Active" : null);
-                    }
+                    refreshThemeSummaries(key);
                     return true;
                 });
             }
 
-            // --- Accent Color ---
+            // --- Terminal Theme (custom) ---
+            Preference themeCustomPref = findPreference("theme_custom");
+            if (themeCustomPref != null) {
+                if (NewTermuxColorTheme.THEME_KEY_CUSTOM.equals(currentTheme))
+                    themeCustomPref.setSummary("✓ Active");
+                themeCustomPref.setOnPreferenceClickListener(pref -> {
+                    new AlertDialog.Builder(requireContext())
+                        .setTitle("Custom Theme Scope")
+                        .setItems(new String[]{
+                            "Core 3  (Background, Foreground, Cursor)",
+                            "All 18 terminal colors"
+                        }, (d, which) -> showThemeEditor(context, which == 1))
+                        .show();
+                    return true;
+                });
+            }
+
+            // --- Accent Color (presets) ---
             int current = NewTermuxTheme.getAccentColor(context);
             for (int i = 0; i < COLOR_KEYS.length; i++) {
                 final int color = COLOR_VALUES[i];
@@ -518,13 +543,171 @@ public class SettingsActivity extends AppCompatActivity {
                 if (color == current) pref.setSummary("✓ Active");
                 pref.setOnPreferenceClickListener(preference -> {
                     NewTermuxTheme.setAccentColor(context, color);
-                    for (int j = 0; j < COLOR_KEYS.length; j++) {
-                        Preference p = findPreference(COLOR_KEYS[j]);
-                        if (p != null) p.setSummary(COLOR_VALUES[j] == color ? "✓ Active" : null);
-                    }
+                    refreshAccentSummaries(color);
                     return true;
                 });
             }
+
+            // --- Accent Color (custom) ---
+            Preference colorCustomPref = findPreference("color_custom");
+            if (colorCustomPref != null) {
+                if (NewTermuxTheme.isCustomAccentActive(context))
+                    colorCustomPref.setSummary("✓ Active (" + colorHex(current) + ")");
+                colorCustomPref.setOnPreferenceClickListener(pref -> {
+                    new ColorPickerDialog(context)
+                        .setInitialColor(NewTermuxTheme.getAccentColor(context))
+                        .setOnColorSelectedListener(color -> {
+                            NewTermuxTheme.setAccentColor(context, color);
+                            refreshAccentSummaries(color);
+                        })
+                        .show();
+                    return true;
+                });
+            }
+        }
+
+        private void refreshThemeSummaries(String activeKey) {
+            for (String k : NewTermuxColorTheme.THEME_KEYS) {
+                Preference p = findPreference("theme_" + k);
+                if (p != null) p.setSummary(k.equals(activeKey) ? "✓ Active" : null);
+            }
+        }
+
+        private void refreshAccentSummaries(int activeColor) {
+            for (int j = 0; j < COLOR_KEYS.length; j++) {
+                Preference p = findPreference(COLOR_KEYS[j]);
+                if (p != null) p.setSummary(COLOR_VALUES[j] == activeColor ? "✓ Active" : null);
+            }
+            Preference customPref = findPreference("color_custom");
+            if (customPref != null) {
+                Context ctx = getContext();
+                if (ctx != null && NewTermuxTheme.isCustomAccentActive(ctx)) {
+                    customPref.setSummary("✓ Active (" + colorHex(activeColor) + ")");
+                } else {
+                    customPref.setSummary(null);
+                }
+            }
+        }
+
+        private void showThemeEditor(Context context, boolean allColors) {
+            String[] keys, labels;
+            if (allColors) {
+                keys = new String[]{
+                    "background", "foreground", "cursor",
+                    "color0", "color1", "color2", "color3", "color4",
+                    "color5", "color6", "color7", "color8", "color9",
+                    "color10", "color11", "color12", "color13", "color14", "color15"
+                };
+                labels = new String[]{
+                    "Background", "Foreground", "Cursor",
+                    "Color 0 (Black)", "Color 1 (Red)", "Color 2 (Green)", "Color 3 (Yellow)",
+                    "Color 4 (Blue)", "Color 5 (Magenta)", "Color 6 (Cyan)", "Color 7 (White)",
+                    "Color 8 (Bright Black)", "Color 9 (Bright Red)", "Color 10 (Bright Green)",
+                    "Color 11 (Bright Yellow)", "Color 12 (Bright Blue)", "Color 13 (Bright Magenta)",
+                    "Color 14 (Bright Cyan)", "Color 15 (Bright White)"
+                };
+            } else {
+                keys = new String[]{"background", "foreground", "cursor"};
+                labels = new String[]{"Background", "Foreground", "Cursor"};
+            }
+
+            String baseContent = NewTermuxColorTheme.getCustomThemeContent(context);
+            LinkedHashMap<String, Integer> colorMap = parseThemeContent(baseContent, keys);
+
+            android.view.View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_theme_editor, null);
+            LinearLayout colorList = dialogView.findViewById(R.id.theme_color_list);
+
+            android.view.View[] swatches = new android.view.View[keys.length];
+            for (int i = 0; i < keys.length; i++) {
+                final String key = keys[i];
+                final int idx = i;
+                android.view.View row = LayoutInflater.from(requireContext())
+                    .inflate(R.layout.item_theme_color, colorList, false);
+                TextView rowLabel = row.findViewById(R.id.slot_label);
+                android.view.View swatch = row.findViewById(R.id.color_swatch);
+
+                rowLabel.setText(labels[i]);
+                int rowColor = colorMap.containsKey(key) ? colorMap.get(key) : 0xFF808080;
+                setSwatchColor(swatch, rowColor);
+                swatches[idx] = swatch;
+
+                swatch.setOnClickListener(v -> {
+                    int cur = colorMap.containsKey(key) ? colorMap.get(key) : 0xFF808080;
+                    new ColorPickerDialog(requireContext())
+                        .setInitialColor(cur)
+                        .setOnColorSelectedListener(newColor -> {
+                            colorMap.put(key, newColor);
+                            setSwatchColor(swatches[idx], newColor);
+                        })
+                        .show();
+                });
+
+                colorList.addView(row);
+            }
+
+            new AlertDialog.Builder(requireContext())
+                .setTitle("Custom Theme")
+                .setView(dialogView)
+                .setPositiveButton("Apply", (d, w) -> {
+                    String newContent = buildThemeContent(baseContent, colorMap);
+                    NewTermuxColorTheme.applyCustomTheme(context, newContent);
+                    refreshThemeSummaries(NewTermuxColorTheme.THEME_KEY_CUSTOM);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+        }
+
+        private void setSwatchColor(android.view.View swatch, int color) {
+            GradientDrawable gd = new GradientDrawable();
+            gd.setCornerRadius(12f);
+            gd.setColor(color);
+            swatch.setBackground(gd);
+        }
+
+        private LinkedHashMap<String, Integer> parseThemeContent(String content, String[] keys) {
+            LinkedHashMap<String, Integer> map = new LinkedHashMap<>();
+            for (String k : keys) map.put(k, 0xFF808080);
+            if (content == null) return map;
+            for (String line : content.split("\n")) {
+                line = line.trim();
+                if (line.isEmpty() || line.startsWith("#")) continue;
+                int eq = line.indexOf('=');
+                if (eq < 0) continue;
+                String k = line.substring(0, eq).trim();
+                String v = line.substring(eq + 1).trim();
+                if (map.containsKey(k)) {
+                    try {
+                        map.put(k, Color.parseColor(v.startsWith("#") ? v : "#" + v));
+                    } catch (IllegalArgumentException ignored) {}
+                }
+            }
+            return map;
+        }
+
+        private String buildThemeContent(String baseContent, LinkedHashMap<String, Integer> colorMap) {
+            LinkedHashMap<String, String> allLines = new LinkedHashMap<>();
+            if (baseContent != null) {
+                for (String line : baseContent.split("\n")) {
+                    line = line.trim();
+                    if (line.isEmpty()) continue;
+                    int eq = line.indexOf('=');
+                    if (eq < 0) continue;
+                    allLines.put(line.substring(0, eq).trim(), line.substring(eq + 1).trim());
+                }
+            }
+            for (Map.Entry<String, Integer> entry : colorMap.entrySet()) {
+                allLines.put(entry.getKey(), String.format("#%06X", 0xFFFFFF & entry.getValue()));
+            }
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> entry : allLines.entrySet()) {
+                sb.append(entry.getKey()).append('=').append(entry.getValue()).append('\n');
+            }
+            return sb.toString();
+        }
+
+        private static String colorHex(int color) {
+            return String.format("#%06X", 0xFFFFFF & color);
         }
     }
 

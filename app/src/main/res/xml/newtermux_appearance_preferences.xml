@@ -9,6 +9,7 @@
         <Preference app:key="theme_low_contrast"    app:title="Low Contrast" />
         <Preference app:key="theme_solarized_dark"  app:title="Solarized Dark" />
         <Preference app:key="theme_dracula"         app:title="Dracula" />
+        <Preference app:key="theme_custom"          app:title="🎨 Custom…" />
 
     </PreferenceCategory>
 
@@ -23,6 +24,7 @@
         <Preference app:key="color_pink"    app:title="🩷 Pink" />
         <Preference app:key="color_gold"    app:title="🟡 Gold" />
         <Preference app:key="color_white"   app:title="⚪ White" />
+        <Preference app:key="color_custom"  app:title="🎨 Custom…" />
 
     </PreferenceCategory>
 
