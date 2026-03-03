@@ -45,4 +45,13 @@
             app:defaultValue="true" />
     </PreferenceCategory>
 
+
+    <PreferenceCategory app:title="Permissions">
+        <Preference
+            app:key="grant_storage_permission"
+            app:title="Grant Storage Permission"
+            app:summary="Allow access to /sdcard and set up ~/storage symlinks"
+            app:persistent="false" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

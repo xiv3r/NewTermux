@@ -1,11 +1,14 @@
 package com.termux.app.activities;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.widget.Toast;
+
+import com.termux.app.TermuxActivity;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -417,6 +420,17 @@ public class SettingsActivity extends AppCompatActivity {
             for (String key : boolKeys) {
                 Preference pref = findPreference(key);
                 if (pref != null) pref.setOnPreferenceChangeListener(listener);
+            }
+
+            Preference storagePermPref = findPreference("grant_storage_permission");
+            if (storagePermPref != null) {
+                storagePermPref.setOnPreferenceClickListener(pref -> {
+                    Activity activity = getActivity();
+                    if (activity instanceof TermuxActivity) {
+                        ((TermuxActivity) activity).requestStoragePermission(false);
+                    }
+                    return true;
+                });
             }
         }
     }
