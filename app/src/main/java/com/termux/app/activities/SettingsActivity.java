@@ -192,9 +192,10 @@ public class SettingsActivity extends AppCompatActivity {
                     Context ctx = getContext();
                     if (ctx == null) return;
                     new AlertDialog.Builder(ctx)
-                        .setTitle("Restore Termux")
-                        .setMessage("This will overwrite your current Termux files. Continue?")
-                        .setPositiveButton("Restore", (d, w) -> runRestore(ctx, uri))
+                        .setTitle("What type of backup is this?")
+                        .setMessage("Choose the correct type so the right restore method is used.")
+                        .setPositiveButton("Full (home + usr)", (d, w) -> confirmRestore(ctx, uri, true))
+                        .setNeutralButton("Basic (home only)", (d, w) -> confirmRestore(ctx, uri, false))
                         .setNegativeButton("Cancel", null)
                         .show();
                 }
@@ -207,10 +208,18 @@ public class SettingsActivity extends AppCompatActivity {
             Context context = getContext();
             if (context == null) return;
 
-            Preference backupPref = findPreference("backup_now");
-            if (backupPref != null) {
-                backupPref.setOnPreferenceClickListener(pref -> {
-                    runBackup(context);
+            Preference basicBackupPref = findPreference("basic_backup_now");
+            if (basicBackupPref != null) {
+                basicBackupPref.setOnPreferenceClickListener(pref -> {
+                    runBasicBackup(context);
+                    return true;
+                });
+            }
+
+            Preference fullBackupPref = findPreference("full_backup_now");
+            if (fullBackupPref != null) {
+                fullBackupPref.setOnPreferenceClickListener(pref -> {
+                    runFullBackup(context);
                     return true;
                 });
             }
@@ -224,9 +233,9 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
 
-        private void runBackup(Context context) {
+        private void runBasicBackup(Context context) {
             ProgressDialog dialog = new ProgressDialog(context);
-            dialog.setMessage("Backing up\u2026");
+            dialog.setMessage("Backing up home\u2026");
             dialog.setCancelable(false);
             dialog.show();
             new Thread(() -> {
@@ -234,7 +243,37 @@ public class SettingsActivity extends AppCompatActivity {
                 try {
                     runCommand(new String[]{"termux-setup-storage"});
                     Process p = Runtime.getRuntime().exec(new String[]{
-                        "tar", "-zcvf", "/sdcard/Download/termux-backup.tar.gz",
+                        "tar", "-zcvf", "/sdcard/Download/termux-home-backup.tar.gz",
+                        "-C", "/data/data/com.termux/files/home", "."
+                    });
+                    String errText = readStream(p.getErrorStream());
+                    int exit = p.waitFor();
+                    if (exit != 0) error = errText;
+                } catch (Exception e) {
+                    error = e.getMessage();
+                }
+                final String finalError = error;
+                requireActivity().runOnUiThread(() -> {
+                    dialog.dismiss();
+                    Toast.makeText(context,
+                        finalError == null ? "Basic backup complete" : "Backup failed: " + finalError,
+                        finalError == null ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG
+                    ).show();
+                });
+            }).start();
+        }
+
+        private void runFullBackup(Context context) {
+            ProgressDialog dialog = new ProgressDialog(context);
+            dialog.setMessage("Backing up home + usr\u2026");
+            dialog.setCancelable(false);
+            dialog.show();
+            new Thread(() -> {
+                String error = null;
+                try {
+                    runCommand(new String[]{"termux-setup-storage"});
+                    Process p = Runtime.getRuntime().exec(new String[]{
+                        "tar", "-zcvf", "/sdcard/Download/termux-full-backup.tar.gz",
                         "-C", "/data/data/com.termux/files", "./home", "./usr"
                     });
                     String errText = readStream(p.getErrorStream());
@@ -247,14 +286,26 @@ public class SettingsActivity extends AppCompatActivity {
                 requireActivity().runOnUiThread(() -> {
                     dialog.dismiss();
                     Toast.makeText(context,
-                        finalError == null ? "Backup complete" : "Backup failed: " + finalError,
+                        finalError == null ? "Full backup complete" : "Backup failed: " + finalError,
                         finalError == null ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG
                     ).show();
                 });
             }).start();
         }
 
-        private void runRestore(Context context, Uri fileUri) {
+        private void confirmRestore(Context context, Uri fileUri, boolean full) {
+            String msg = full
+                ? "This will overwrite your home and usr directories. Continue?"
+                : "This will overwrite your home directory. Continue?";
+            new AlertDialog.Builder(context)
+                .setTitle("Restore Termux")
+                .setMessage(msg)
+                .setPositiveButton("Restore", (d, w) -> runRestore(context, fileUri, full))
+                .setNegativeButton("Cancel", null)
+                .show();
+        }
+
+        private void runRestore(Context context, Uri fileUri, boolean full) {
             ProgressDialog dialog = new ProgressDialog(context);
             dialog.setMessage("Restoring\u2026");
             dialog.setCancelable(false);
@@ -275,11 +326,19 @@ public class SettingsActivity extends AppCompatActivity {
                     } else {
                         filePath = fileUri.getPath();
                     }
-                    Process p = Runtime.getRuntime().exec(new String[]{
-                        "tar", "-zxvf", filePath,
-                        "-C", "/data/data/com.termux/files",
-                        "--recursive-unlink", "--preserve-permissions"
-                    });
+                    Process p;
+                    if (full) {
+                        p = Runtime.getRuntime().exec(new String[]{
+                            "tar", "-zxvf", filePath,
+                            "-C", "/data/data/com.termux/files",
+                            "--recursive-unlink", "--preserve-permissions"
+                        });
+                    } else {
+                        p = Runtime.getRuntime().exec(new String[]{
+                            "tar", "-zxvf", filePath,
+                            "-C", "/data/data/com.termux/files/home"
+                        });
+                    }
                     String errText = readStream(p.getErrorStream());
                     int exit = p.waitFor();
                     if (exit != 0) error = errText;
