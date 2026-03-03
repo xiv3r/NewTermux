@@ -42,13 +42,9 @@
             app:title="Install Zsh"
             app:summary="Required for syntax highlighting and autosuggestions"
             app:persistent="false" />
-        <SwitchPreferenceCompat app:key="zsh_autosuggestions"
-            app:title="zsh-autosuggestions"
-            app:summary="Fish-like inline suggestions as you type"
-            app:defaultValue="false" />
-        <SwitchPreferenceCompat app:key="zsh_syntax_highlighting"
-            app:title="zsh-syntax-highlighting"
-            app:summary="Color-code commands as you type — green=valid, red=not found"
+        <SwitchPreferenceCompat app:key="zsh_plugins"
+            app:title="Shell Enhancements"
+            app:summary="Autosuggestions + syntax highlighting (requires Zsh)"
             app:defaultValue="false" />
     </PreferenceCategory>
 

@@ -420,30 +420,16 @@ public class SettingsActivity extends AppCompatActivity {
             boolean zshInstalled = new java.io.File(
                 com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH, "bin/zsh").exists();
 
-            SwitchPreferenceCompat autosuggPref   = findPreference(NewTermuxSettings.KEY_ZSH_AUTOSUGGESTIONS);
-            SwitchPreferenceCompat syntaxHlPref   = findPreference(NewTermuxSettings.KEY_ZSH_SYNTAX_HIGHLIGHTING);
+            SwitchPreferenceCompat pluginsPref = findPreference(NewTermuxSettings.KEY_ZSH_PLUGINS);
 
-            if (autosuggPref != null) {
-                autosuggPref.setEnabled(zshInstalled);
-                autosuggPref.setChecked(NewTermuxSettings.isZshAutosuggestionsEnabled(context));
-                if (!zshInstalled) autosuggPref.setSummary("Install Zsh first to enable this");
-                autosuggPref.setOnPreferenceChangeListener((pref, newValue) -> {
+            if (pluginsPref != null) {
+                pluginsPref.setEnabled(zshInstalled);
+                pluginsPref.setChecked(NewTermuxSettings.isZshPluginsEnabled(context));
+                if (!zshInstalled) pluginsPref.setSummary("Install Zsh first to enable this");
+                pluginsPref.setOnPreferenceChangeListener((pref, newValue) -> {
                     boolean val = (Boolean) newValue;
-                    NewTermuxSettings.set(context, NewTermuxSettings.KEY_ZSH_AUTOSUGGESTIONS, val);
-                    new Thread(() -> TermuxInstaller.setZshAutosuggestions(context, val)).start();
-                    showRestartWarning();
-                    return true;
-                });
-            }
-
-            if (syntaxHlPref != null) {
-                syntaxHlPref.setEnabled(zshInstalled);
-                syntaxHlPref.setChecked(NewTermuxSettings.isZshSyntaxHighlightingEnabled(context));
-                if (!zshInstalled) syntaxHlPref.setSummary("Install Zsh first to enable this");
-                syntaxHlPref.setOnPreferenceChangeListener((pref, newValue) -> {
-                    boolean val = (Boolean) newValue;
-                    NewTermuxSettings.set(context, NewTermuxSettings.KEY_ZSH_SYNTAX_HIGHLIGHTING, val);
-                    new Thread(() -> TermuxInstaller.setZshSyntaxHighlighting(context, val)).start();
+                    NewTermuxSettings.set(context, NewTermuxSettings.KEY_ZSH_PLUGINS, val);
+                    new Thread(() -> TermuxInstaller.setZshPlugins(context, val)).start();
                     showRestartWarning();
                     return true;
                 });

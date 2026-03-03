@@ -13,8 +13,7 @@ public class NewTermuxSettings {
     public static final String KEY_SHOW_STT_BUTTON      = "show_stt_button";
     public static final String KEY_SHOW_PACKAGES_BUTTON = "show_packages_button";
     public static final String KEY_SHOW_CLEAR_BUTTON        = "show_clear_button";
-    public static final String KEY_ZSH_AUTOSUGGESTIONS      = "zsh_autosuggestions";
-    public static final String KEY_ZSH_SYNTAX_HIGHLIGHTING  = "zsh_syntax_highlighting";
+    public static final String KEY_ZSH_PLUGINS = "zsh_plugins";
     public static final String KEY_SESSION_TABS             = "session_tabs";
 
     private static SharedPreferences prefs(Context ctx) {
@@ -43,11 +42,8 @@ public class NewTermuxSettings {
     public static boolean isShowClearButton(Context ctx) {
         return prefs(ctx).getBoolean(KEY_SHOW_CLEAR_BUTTON, true);
     }
-    public static boolean isZshAutosuggestionsEnabled(Context ctx) {
-        return prefs(ctx).getBoolean(KEY_ZSH_AUTOSUGGESTIONS, false);
-    }
-    public static boolean isZshSyntaxHighlightingEnabled(Context ctx) {
-        return prefs(ctx).getBoolean(KEY_ZSH_SYNTAX_HIGHLIGHTING, false);
+    public static boolean isZshPluginsEnabled(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_ZSH_PLUGINS, false);
     }
     public static boolean isSessionTabsEnabled(Context ctx) {
         return prefs(ctx).getBoolean(KEY_SESSION_TABS, true);
@@ -78,8 +74,7 @@ public class NewTermuxSettings {
             case KEY_SHOW_STT_BUTTON:      return isShowSttButton(ctx);
             case KEY_SHOW_PACKAGES_BUTTON: return isShowPackagesButton(ctx);
             case KEY_SHOW_CLEAR_BUTTON:    return isShowClearButton(ctx);
-            case KEY_ZSH_AUTOSUGGESTIONS:     return isZshAutosuggestionsEnabled(ctx);
-            case KEY_ZSH_SYNTAX_HIGHLIGHTING: return isZshSyntaxHighlightingEnabled(ctx);
+            case KEY_ZSH_PLUGINS: return isZshPluginsEnabled(ctx);
             case KEY_SESSION_TABS:            return isSessionTabsEnabled(ctx);
             default:                       return prefs(ctx).getBoolean(key, false);
         }
