@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -271,11 +272,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         setTerminalToolbarView(savedInstanceState);
 
-        setSettingsButtonView();
-
-        setNewSessionButtonView();
-
-        setToggleKeyboardView();
+        setupDrawerCommandButtons();
 
         setupNewTermuxFeatures();
 
@@ -453,8 +450,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         Logger.logDebug(LOG_TAG, "onServiceConnected");
 
         mTermuxService = ((TermuxService.LocalBinder) service).service;
-
-        setTermuxSessionsListView();
 
         final Intent intent = getIntent();
         setIntent(null);
@@ -931,35 +926,80 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
     // -----------------------------------------------------------------------------------------
 
-    private void setSettingsButtonView() {
-        ImageButton settingsButton = findViewById(R.id.settings_button);
-        settingsButton.setOnClickListener(v -> {
-            ActivityUtils.startActivity(this, new Intent(this, SettingsActivity.class));
-        });
+    private static final String DRAWER_PREFS = "newtermux_drawer_buttons";
+    private static final String[] DRAWER_BTN_DEFAULT_NAMES = {"Gemini Yolo", "Claude", "", "", ""};
+    private static final String[] DRAWER_BTN_DEFAULT_CMDS  = {
+        "gemini --yolo",
+        "claude --dangerously-skip-permissions",
+        "", "", ""
+    };
+    private static final int[] DRAWER_BTN_IDS = {
+        R.id.drawer_cmd_btn_1, R.id.drawer_cmd_btn_2, R.id.drawer_cmd_btn_3,
+        R.id.drawer_cmd_btn_4, R.id.drawer_cmd_btn_5
+    };
+
+    private void setupDrawerCommandButtons() {
+        SharedPreferences prefs = getSharedPreferences(DRAWER_PREFS, MODE_PRIVATE);
+        for (int i = 0; i < DRAWER_BTN_IDS.length; i++) {
+            final int idx = i;
+            android.widget.Button btn = findViewById(DRAWER_BTN_IDS[i]);
+            if (btn == null) continue;
+            String name = prefs.getString("btn_" + (i + 1) + "_name", DRAWER_BTN_DEFAULT_NAMES[i]);
+            String cmd  = prefs.getString("btn_" + (i + 1) + "_cmd",  DRAWER_BTN_DEFAULT_CMDS[i]);
+            btn.setText(name.isEmpty() ? "Button " + (i + 1) : name);
+            btn.setAlpha(cmd.isEmpty() ? 0.4f : 1.0f);
+            btn.setOnClickListener(v -> {
+                String c = prefs.getString("btn_" + (idx + 1) + "_cmd", DRAWER_BTN_DEFAULT_CMDS[idx]);
+                if (!c.isEmpty()) {
+                    TerminalSession session = getCurrentSession();
+                    if (session != null) {
+                        byte[] bytes = (c + "\n").getBytes();
+                        session.write(bytes, 0, bytes.length);
+                    }
+                    getDrawer().closeDrawers();
+                }
+            });
+            btn.setOnLongClickListener(v -> {
+                showEditDrawerButtonDialog(idx);
+                return true;
+            });
+        }
     }
 
-    private void setNewSessionButtonView() {
-        View newSessionButton = findViewById(R.id.new_session_button);
-        newSessionButton.setOnClickListener(v -> mTermuxTerminalSessionActivityClient.addNewSession(false, null));
-        newSessionButton.setOnLongClickListener(v -> {
-            TextInputDialogUtils.textInput(TermuxActivity.this, R.string.title_create_named_session, null,
-                R.string.action_create_named_session_confirm, text -> mTermuxTerminalSessionActivityClient.addNewSession(false, text),
-                R.string.action_new_session_failsafe, text -> mTermuxTerminalSessionActivityClient.addNewSession(true, text),
-                -1, null, null);
-            return true;
-        });
-    }
+    private void showEditDrawerButtonDialog(int idx) {
+        SharedPreferences prefs = getSharedPreferences(DRAWER_PREFS, MODE_PRIVATE);
+        String currentName = prefs.getString("btn_" + (idx + 1) + "_name", DRAWER_BTN_DEFAULT_NAMES[idx]);
+        String currentCmd  = prefs.getString("btn_" + (idx + 1) + "_cmd",  DRAWER_BTN_DEFAULT_CMDS[idx]);
 
-    private void setToggleKeyboardView() {
-        findViewById(R.id.toggle_keyboard_button).setOnClickListener(v -> {
-            mTermuxTerminalViewClient.onToggleSoftKeyboardRequest();
-            getDrawer().closeDrawers();
-        });
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int pad = Math.round(16 * getResources().getDisplayMetrics().density);
+        layout.setPadding(pad, pad, pad, 0);
 
-        findViewById(R.id.toggle_keyboard_button).setOnLongClickListener(v -> {
-            toggleTerminalToolbar();
-            return true;
-        });
+        EditText nameField = new EditText(this);
+        nameField.setHint("Button label");
+        nameField.setText(currentName);
+        layout.addView(nameField);
+
+        EditText cmdField = new EditText(this);
+        cmdField.setHint("Command");
+        cmdField.setText(currentCmd);
+        layout.addView(cmdField);
+
+        new AlertDialog.Builder(this)
+            .setTitle("Edit Button " + (idx + 1))
+            .setView(layout)
+            .setPositiveButton("Save", (d, w) -> {
+                String newName = nameField.getText().toString().trim();
+                String newCmd  = cmdField.getText().toString().trim();
+                prefs.edit()
+                    .putString("btn_" + (idx + 1) + "_name", newName)
+                    .putString("btn_" + (idx + 1) + "_cmd",  newCmd)
+                    .apply();
+                setupDrawerCommandButtons();
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
     }
 
 
@@ -1230,7 +1270,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
 
     public void termuxSessionListNotifyUpdated() {
-        mTermuxSessionListViewController.notifyDataSetChanged();
+        if (mTermuxSessionListViewController != null)
+            mTermuxSessionListViewController.notifyDataSetChanged();
         updateSessionTabs();
     }
 
