@@ -181,10 +181,33 @@ public class SettingsActivity extends AppCompatActivity {
     public static class BackupPreferencesFragment extends PreferenceFragmentCompat {
 
         private ActivityResultLauncher<String[]> mRestoreFilePicker;
+        private ActivityResultLauncher<String> mBasicBackupSaver;
+        private ActivityResultLauncher<String> mFullBackupSaver;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+
+            mBasicBackupSaver = registerForActivityResult(
+                new ActivityResultContracts.CreateDocument("application/gzip"),
+                uri -> {
+                    if (uri == null) return;
+                    Context ctx = getContext();
+                    if (ctx == null) return;
+                    runBackupToUri(ctx, uri, false);
+                }
+            );
+
+            mFullBackupSaver = registerForActivityResult(
+                new ActivityResultContracts.CreateDocument("application/gzip"),
+                uri -> {
+                    if (uri == null) return;
+                    Context ctx = getContext();
+                    if (ctx == null) return;
+                    runBackupToUri(ctx, uri, true);
+                }
+            );
+
             mRestoreFilePicker = registerForActivityResult(
                 new ActivityResultContracts.OpenDocument(),
                 uri -> {
@@ -211,7 +234,7 @@ public class SettingsActivity extends AppCompatActivity {
             Preference basicBackupPref = findPreference("basic_backup_now");
             if (basicBackupPref != null) {
                 basicBackupPref.setOnPreferenceClickListener(pref -> {
-                    runBasicBackup(context);
+                    mBasicBackupSaver.launch("termux-home-backup.tar.gz");
                     return true;
                 });
             }
@@ -219,7 +242,7 @@ public class SettingsActivity extends AppCompatActivity {
             Preference fullBackupPref = findPreference("full_backup_now");
             if (fullBackupPref != null) {
                 fullBackupPref.setOnPreferenceClickListener(pref -> {
-                    runFullBackup(context);
+                    mFullBackupSaver.launch("termux-full-backup.tar.gz");
                     return true;
                 });
             }
@@ -233,22 +256,33 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
 
-        private void runBasicBackup(Context context) {
+        private void runBackupToUri(Context context, Uri uri, boolean full) {
             ProgressDialog dialog = new ProgressDialog(context);
-            dialog.setMessage("Backing up home\u2026");
+            dialog.setMessage(full ? "Backing up home + usr\u2026" : "Backing up home\u2026");
             dialog.setCancelable(false);
             dialog.show();
             new Thread(() -> {
                 String error = null;
                 try {
-                    Process p = Runtime.getRuntime().exec(new String[]{
-                        "/data/data/com.termux/files/usr/bin/tar", "-zcvf",
-                        "/sdcard/Download/termux-home-backup.tar.gz",
-                        "-C", "/data/data/com.termux/files/home", "."
-                    });
+                    String[] cmd = full
+                        ? new String[]{
+                            "/data/data/com.termux/files/usr/bin/tar", "-zcf", "-",
+                            "-C", "/data/data/com.termux/files", "./home", "./usr"
+                          }
+                        : new String[]{
+                            "/data/data/com.termux/files/usr/bin/tar", "-zcf", "-",
+                            "-C", "/data/data/com.termux/files/home", "."
+                          };
+                    Process p = Runtime.getRuntime().exec(cmd);
+                    try (java.io.InputStream in = p.getInputStream();
+                         java.io.OutputStream out = context.getContentResolver().openOutputStream(uri)) {
+                        byte[] buf = new byte[8192];
+                        int n;
+                        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+                    }
                     String errText = readStream(p.getErrorStream());
                     int exit = p.waitFor();
-                    if (exit != 0) error = errText;
+                    if (exit != 0) error = errText.isEmpty() ? "tar exited with code " + exit : errText;
                 } catch (Exception e) {
                     error = e.getMessage();
                 }
@@ -256,37 +290,7 @@ public class SettingsActivity extends AppCompatActivity {
                 requireActivity().runOnUiThread(() -> {
                     dialog.dismiss();
                     Toast.makeText(context,
-                        finalError == null ? "Basic backup complete" : "Backup failed: " + finalError,
-                        finalError == null ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG
-                    ).show();
-                });
-            }).start();
-        }
-
-        private void runFullBackup(Context context) {
-            ProgressDialog dialog = new ProgressDialog(context);
-            dialog.setMessage("Backing up home + usr\u2026");
-            dialog.setCancelable(false);
-            dialog.show();
-            new Thread(() -> {
-                String error = null;
-                try {
-                    Process p = Runtime.getRuntime().exec(new String[]{
-                        "/data/data/com.termux/files/usr/bin/tar", "-zcvf",
-                        "/sdcard/Download/termux-full-backup.tar.gz",
-                        "-C", "/data/data/com.termux/files", "./home", "./usr"
-                    });
-                    String errText = readStream(p.getErrorStream());
-                    int exit = p.waitFor();
-                    if (exit != 0) error = errText;
-                } catch (Exception e) {
-                    error = e.getMessage();
-                }
-                final String finalError = error;
-                requireActivity().runOnUiThread(() -> {
-                    dialog.dismiss();
-                    Toast.makeText(context,
-                        finalError == null ? "Full backup complete" : "Backup failed: " + finalError,
+                        finalError == null ? "Backup complete" : "Backup failed: " + finalError,
                         finalError == null ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG
                     ).show();
                 });
