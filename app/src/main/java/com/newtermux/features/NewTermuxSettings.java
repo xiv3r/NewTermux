@@ -15,6 +15,9 @@ public class NewTermuxSettings {
     public static final String KEY_SHOW_CLEAR_BUTTON        = "show_clear_button";
     public static final String KEY_ZSH_PLUGINS = "zsh_plugins";
     public static final String KEY_SESSION_TABS             = "session_tabs";
+    public static final String KEY_AUTOCORRECT               = "autocorrect_enabled";
+    public static final String KEY_SHOW_DRAWER_EXPORT_SCRIPT = "show_drawer_export_script";
+    public static final String KEY_SHOW_DRAWER_CMD_BUTTONS   = "show_drawer_cmd_buttons";
 
     private static SharedPreferences prefs(Context ctx) {
         return ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -48,6 +51,15 @@ public class NewTermuxSettings {
     public static boolean isSessionTabsEnabled(Context ctx) {
         return prefs(ctx).getBoolean(KEY_SESSION_TABS, true);
     }
+    public static boolean isAutocorrectEnabled(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_AUTOCORRECT, true);
+    }
+    public static boolean isShowDrawerExportScript(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_SHOW_DRAWER_EXPORT_SCRIPT, true);
+    }
+    public static boolean isShowDrawerCmdButtons(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_SHOW_DRAWER_CMD_BUTTONS, true);
+    }
 
     // Pending command — written by Settings, consumed and cleared by TermuxActivity.onResume()
     public static String getPendingCommand(Context ctx) {
@@ -74,9 +86,12 @@ public class NewTermuxSettings {
             case KEY_SHOW_STT_BUTTON:      return isShowSttButton(ctx);
             case KEY_SHOW_PACKAGES_BUTTON: return isShowPackagesButton(ctx);
             case KEY_SHOW_CLEAR_BUTTON:    return isShowClearButton(ctx);
-            case KEY_ZSH_PLUGINS: return isZshPluginsEnabled(ctx);
-            case KEY_SESSION_TABS:            return isSessionTabsEnabled(ctx);
-            default:                       return prefs(ctx).getBoolean(key, false);
+            case KEY_ZSH_PLUGINS:                  return isZshPluginsEnabled(ctx);
+            case KEY_SESSION_TABS:                 return isSessionTabsEnabled(ctx);
+            case KEY_AUTOCORRECT:                  return isAutocorrectEnabled(ctx);
+            case KEY_SHOW_DRAWER_EXPORT_SCRIPT:    return isShowDrawerExportScript(ctx);
+            case KEY_SHOW_DRAWER_CMD_BUTTONS:      return isShowDrawerCmdButtons(ctx);
+            default:                               return prefs(ctx).getBoolean(key, false);
         }
     }
 }

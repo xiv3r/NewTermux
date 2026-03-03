@@ -6,6 +6,11 @@
             app:title="Keyboard Suggestions"
             app:summary="Show autocorrect and word suggestions bar"
             app:defaultValue="false" />
+        <SwitchPreferenceCompat
+            app:key="autocorrect_enabled"
+            app:title="Command Autocorrect"
+            app:summary="Suggest corrections for mistyped commands (spacebar)"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Toolbar Buttons">
@@ -46,6 +51,19 @@
             app:title="Shell Enhancements"
             app:summary="Autosuggestions + syntax highlighting (requires Zsh)"
             app:defaultValue="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Drawer">
+        <SwitchPreferenceCompat
+            app:key="show_drawer_export_script"
+            app:title="Drawer Utility Buttons"
+            app:summary="Show Export Screen and Make Script buttons"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="show_drawer_cmd_buttons"
+            app:title="Drawer Command Buttons"
+            app:summary="Show the 5 customisable command shortcut buttons"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Permissions">

@@ -440,6 +440,20 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         setVisible(R.id.btn_clear_terminal, NewTermuxSettings.isShowClearButton(this));
         // Hide/show the whole scroll container (chip group lives inside it)
         setVisible(R.id.session_tabs_scroll, NewTermuxSettings.isSessionTabsEnabled(this));
+        // Autocorrect initial enabled state
+        if (mAutoCorrectHandler != null)
+            mAutoCorrectHandler.setEnabled(NewTermuxSettings.isAutocorrectEnabled(this));
+        // Drawer utility buttons (Export Screen + Make Script)
+        boolean showUtil = NewTermuxSettings.isShowDrawerExportScript(this);
+        boolean showCmd  = NewTermuxSettings.isShowDrawerCmdButtons(this);
+        setVisible(R.id.drawer_export_btn,   showUtil);
+        setVisible(R.id.drawer_script_btn,   showUtil);
+        setVisible(R.id.drawer_util_divider, showUtil && showCmd);
+        setVisible(R.id.drawer_cmd_btn_1,    showCmd);
+        setVisible(R.id.drawer_cmd_btn_2,    showCmd);
+        setVisible(R.id.drawer_cmd_btn_3,    showCmd);
+        setVisible(R.id.drawer_cmd_btn_4,    showCmd);
+        setVisible(R.id.drawer_cmd_btn_5,    showCmd);
     }
 
     private void setVisible(int id, boolean visible) {
