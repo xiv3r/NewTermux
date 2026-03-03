@@ -815,7 +815,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
     }
 
-    private void onSTTButtonClicked() {
+    public void onSTTButtonClicked() {
         if (mSpeechInputManager == null) return;
         if (mSpeechInputManager.isListening()) {
             mSpeechInputManager.stopListening();
