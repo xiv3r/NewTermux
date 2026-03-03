@@ -39,6 +39,14 @@
             app:defaultValue="true" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="Startup">
+        <SwitchPreferenceCompat
+            app:key="startup_script_enabled"
+            app:title="Startup Script"
+            app:summary="Run ~/.termux/startup-script.sh in each new session"
+            app:defaultValue="false" />
+    </PreferenceCategory>
+
 
 
     <PreferenceCategory app:title="Shell">

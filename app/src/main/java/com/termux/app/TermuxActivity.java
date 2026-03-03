@@ -834,7 +834,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             TerminalSession session = termuxSession.getTerminalSession();
             
             com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(this);
-            chip.setText("Session " + (i + 1));
+            String chipLabel = (session.mSessionName != null && !session.mSessionName.isEmpty())
+                ? session.mSessionName
+                : "Session " + (i + 1);
+            chip.setText(chipLabel);
             chip.setCheckable(true);
             chip.setChecked(session == currentSession);
             chip.setTag(termuxSession);
@@ -850,6 +853,12 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                     mTermuxTerminalSessionActivityClient.setCurrentSession(session);
                     updateSessionTabs();
                 }
+            });
+
+            chip.setOnLongClickListener(v -> {
+                if (mTermuxTerminalSessionActivityClient != null)
+                    mTermuxTerminalSessionActivityClient.renameSession(session);
+                return true;
             });
 
             chip.setCloseIconVisible(true);

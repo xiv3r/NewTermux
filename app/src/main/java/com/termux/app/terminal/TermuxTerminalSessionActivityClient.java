@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.termux.R;
+import com.newtermux.features.NewTermuxSettings;
 import com.termux.shared.interact.ShareUtils;
 import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
 import com.termux.shared.termux.interact.TextInputDialogUtils;
@@ -383,6 +384,15 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
 
             TerminalSession newTerminalSession = newTermuxSession.getTerminalSession();
             setCurrentSession(newTerminalSession);
+
+            // Startup script — dot-source into the live shell if enabled and file exists
+            if (NewTermuxSettings.isStartupScriptEnabled(mActivity)) {
+                String scriptPath = TermuxConstants.TERMUX_DATA_HOME_DIR_PATH + "/startup-script.sh";
+                if (new java.io.File(scriptPath).exists()) {
+                    String cmd = ". " + scriptPath + "\n";
+                    newTerminalSession.write(cmd.getBytes(), 0, cmd.length());
+                }
+            }
 
             mActivity.getDrawer().closeDrawers();
         }

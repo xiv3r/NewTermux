@@ -409,6 +409,7 @@ public class SettingsActivity extends AppCompatActivity {
                 NewTermuxSettings.KEY_SHOW_DRAWER_EXPORT_SCRIPT,
                 NewTermuxSettings.KEY_SHOW_DRAWER_PKG_UPDATE,
                 NewTermuxSettings.KEY_SHOW_DRAWER_CMD_BUTTONS,
+                NewTermuxSettings.KEY_STARTUP_SCRIPT_ENABLED,
             };
             for (String key : boolKeys) {
                 SwitchPreferenceCompat pref = findPreference(key);

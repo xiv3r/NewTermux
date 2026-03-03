@@ -19,6 +19,7 @@ public class NewTermuxSettings {
     public static final String KEY_SHOW_DRAWER_EXPORT_SCRIPT = "show_drawer_export_script";
     public static final String KEY_SHOW_DRAWER_PKG_UPDATE    = "show_drawer_pkg_update";
     public static final String KEY_SHOW_DRAWER_CMD_BUTTONS   = "show_drawer_cmd_buttons";
+    public static final String KEY_STARTUP_SCRIPT_ENABLED    = "startup_script_enabled";
 
     private static SharedPreferences prefs(Context ctx) {
         return ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -64,6 +65,9 @@ public class NewTermuxSettings {
     public static boolean isShowDrawerCmdButtons(Context ctx) {
         return prefs(ctx).getBoolean(KEY_SHOW_DRAWER_CMD_BUTTONS, true);
     }
+    public static boolean isStartupScriptEnabled(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_STARTUP_SCRIPT_ENABLED, false);
+    }
 
     // Pending command — written by Settings, consumed and cleared by TermuxActivity.onResume()
     public static String getPendingCommand(Context ctx) {
@@ -96,6 +100,7 @@ public class NewTermuxSettings {
             case KEY_SHOW_DRAWER_EXPORT_SCRIPT:    return isShowDrawerExportScript(ctx);
             case KEY_SHOW_DRAWER_PKG_UPDATE:       return isShowDrawerPkgUpdate(ctx);
             case KEY_SHOW_DRAWER_CMD_BUTTONS:      return isShowDrawerCmdButtons(ctx);
+            case KEY_STARTUP_SCRIPT_ENABLED:       return isStartupScriptEnabled(ctx);
             default:                               return prefs(ctx).getBoolean(key, false);
         }
     }
