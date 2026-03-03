@@ -347,6 +347,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         mIsOnResumeAfterOnCreate = false;
         applyAccentColor();
         applyFeatureSettings();
+        if (mTermuxTerminalSessionActivityClient != null)
+            mTermuxTerminalSessionActivityClient.checkForFontAndColors();
     }
 
     private void applyAccentColor() {

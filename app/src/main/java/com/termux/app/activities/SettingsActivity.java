@@ -21,6 +21,7 @@ import androidx.preference.SwitchPreferenceCompat;
 
 import com.termux.app.TermuxInstaller;
 
+import com.newtermux.features.NewTermuxColorTheme;
 import com.newtermux.features.NewTermuxSettings;
 import com.newtermux.features.NewTermuxTheme;
 
@@ -449,8 +450,25 @@ public class SettingsActivity extends AppCompatActivity {
             Context context = getContext();
             if (context == null) return;
 
-            int current = NewTermuxTheme.getAccentColor(context);
+            // --- Terminal Theme ---
+            String currentTheme = NewTermuxColorTheme.getCurrentTheme(context);
+            for (String themeKey : NewTermuxColorTheme.THEME_KEYS) {
+                final String key = themeKey;
+                Preference pref = findPreference("theme_" + key);
+                if (pref == null) continue;
+                if (key.equals(currentTheme)) pref.setSummary("✓ Active");
+                pref.setOnPreferenceClickListener(preference -> {
+                    NewTermuxColorTheme.applyTheme(context, key);
+                    for (String k : NewTermuxColorTheme.THEME_KEYS) {
+                        Preference p = findPreference("theme_" + k);
+                        if (p != null) p.setSummary(k.equals(key) ? "✓ Active" : null);
+                    }
+                    return true;
+                });
+            }
 
+            // --- Accent Color ---
+            int current = NewTermuxTheme.getAccentColor(context);
             for (int i = 0; i < COLOR_KEYS.length; i++) {
                 final int color = COLOR_VALUES[i];
                 Preference pref = findPreference(COLOR_KEYS[i]);
