@@ -46,19 +46,55 @@
                 android:padding="12dp"
                 android:background="?attr/termuxActivityDrawerBackground">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/drawer_export_btn"
+                <!-- Utility buttons row: Export · Script · Update (3 compact buttons) -->
+                <LinearLayout
+                    android:id="@+id/drawer_util_row"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:text="Export Screen" />
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/drawer_script_btn"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    android:text="Make Script" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/drawer_export_btn"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="2dp"
+                        android:text="Export"
+                        android:textSize="11sp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
+                        app:minHeight="0dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/drawer_script_btn"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:text="Script"
+                        android:textSize="11sp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
+                        app:minHeight="0dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/drawer_pkg_update_btn"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="2dp"
+                        android:text="Update"
+                        android:textSize="11sp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
+                        app:minHeight="0dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+                </LinearLayout>
 
                 <View
                     android:id="@+id/drawer_util_divider"
@@ -67,39 +103,47 @@
                     android:background="?android:attr/listDivider"
                     android:layout_marginBottom="8dp" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/drawer_cmd_btn_1"
+                <!-- Dynamic command buttons (populated in code) -->
+                <LinearLayout
+                    android:id="@+id/drawer_cmd_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:text="Gemini Yolo" />
+                    android:orientation="vertical" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/drawer_cmd_btn_2"
+                <!-- Add / remove button row -->
+                <LinearLayout
+                    android:id="@+id/drawer_cmd_controls"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:text="Claude" />
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/drawer_cmd_btn_3"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:text="Button 3" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/drawer_btn_remove"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:text="−"
+                        android:textSize="18sp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
+                        app:minHeight="0dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/drawer_cmd_btn_4"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:text="Button 4" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/drawer_btn_add"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="+"
+                        android:textSize="18sp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
+                        app:minHeight="0dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/drawer_cmd_btn_5"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Button 5" />
+                </LinearLayout>
 
             </LinearLayout>
 

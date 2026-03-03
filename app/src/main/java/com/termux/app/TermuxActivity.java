@@ -23,10 +23,13 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.button.MaterialButton;
 
 import com.termux.R;
 import com.termux.app.api.file.FileReceiverActivity;
@@ -443,17 +446,13 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         // Autocorrect initial enabled state
         if (mAutoCorrectHandler != null)
             mAutoCorrectHandler.setEnabled(NewTermuxSettings.isAutocorrectEnabled(this));
-        // Drawer utility buttons (Export Screen + Make Script)
+        // Drawer utility buttons (Export · Script · Update)
         boolean showUtil = NewTermuxSettings.isShowDrawerExportScript(this);
         boolean showCmd  = NewTermuxSettings.isShowDrawerCmdButtons(this);
-        setVisible(R.id.drawer_export_btn,   showUtil);
-        setVisible(R.id.drawer_script_btn,   showUtil);
-        setVisible(R.id.drawer_util_divider, showUtil && showCmd);
-        setVisible(R.id.drawer_cmd_btn_1,    showCmd);
-        setVisible(R.id.drawer_cmd_btn_2,    showCmd);
-        setVisible(R.id.drawer_cmd_btn_3,    showCmd);
-        setVisible(R.id.drawer_cmd_btn_4,    showCmd);
-        setVisible(R.id.drawer_cmd_btn_5,    showCmd);
+        setVisible(R.id.drawer_util_row,      showUtil);
+        setVisible(R.id.drawer_util_divider,  showUtil && showCmd);
+        setVisible(R.id.drawer_cmd_container, showCmd);
+        setVisible(R.id.drawer_cmd_controls,  showCmd);
     }
 
     private void setVisible(int id, boolean visible) {
@@ -1009,23 +1008,37 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         "claude --dangerously-skip-permissions",
         "", "", ""
     };
-    private static final int[] DRAWER_BTN_IDS = {
-        R.id.drawer_cmd_btn_1, R.id.drawer_cmd_btn_2, R.id.drawer_cmd_btn_3,
-        R.id.drawer_cmd_btn_4, R.id.drawer_cmd_btn_5
-    };
 
     private void setupDrawerCommandButtons() {
         SharedPreferences prefs = getSharedPreferences(DRAWER_PREFS, MODE_PRIVATE);
-        for (int i = 0; i < DRAWER_BTN_IDS.length; i++) {
+        int count = prefs.getInt("btn_count", DRAWER_BTN_DEFAULT_NAMES.length);
+
+        LinearLayout container = findViewById(R.id.drawer_cmd_container);
+        if (container == null) return;
+        container.removeAllViews();
+
+        int marginBtm = Math.round(6 * getResources().getDisplayMetrics().density);
+        for (int i = 0; i < count; i++) {
             final int idx = i;
-            android.widget.Button btn = findViewById(DRAWER_BTN_IDS[i]);
-            if (btn == null) continue;
-            String name = prefs.getString("btn_" + (i + 1) + "_name", DRAWER_BTN_DEFAULT_NAMES[i]);
-            String cmd  = prefs.getString("btn_" + (i + 1) + "_cmd",  DRAWER_BTN_DEFAULT_CMDS[i]);
-            btn.setText(name.isEmpty() ? "Button " + (i + 1) : name);
-            btn.setAlpha(cmd.isEmpty() ? 0.4f : 1.0f);
+            String defName = idx < DRAWER_BTN_DEFAULT_NAMES.length ? DRAWER_BTN_DEFAULT_NAMES[idx] : "";
+            String defCmd  = idx < DRAWER_BTN_DEFAULT_CMDS.length  ? DRAWER_BTN_DEFAULT_CMDS[idx]  : "";
+            String name = prefs.getString("btn_" + (i + 1) + "_name", defName);
+            String cmd  = prefs.getString("btn_" + (i + 1) + "_cmd",  defCmd);
+
+            MaterialButton btn = new MaterialButton(this);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = marginBtm;
+            btn.setLayoutParams(lp);
+
+            boolean isUnset = name.isEmpty() && cmd.isEmpty();
+            btn.setText(isUnset ? "long press to set" : (name.isEmpty() ? "Button " + (i + 1) : name));
+            if (isUnset) btn.setAlpha(0.5f);
+
             btn.setOnClickListener(v -> {
-                String c = prefs.getString("btn_" + (idx + 1) + "_cmd", DRAWER_BTN_DEFAULT_CMDS[idx]);
+                String c = prefs.getString("btn_" + (idx + 1) + "_cmd",
+                    idx < DRAWER_BTN_DEFAULT_CMDS.length ? DRAWER_BTN_DEFAULT_CMDS[idx] : "");
                 if (!c.isEmpty()) {
                     TerminalSession session = getCurrentSession();
                     if (session != null) {
@@ -1039,13 +1052,38 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 showEditDrawerButtonDialog(idx);
                 return true;
             });
+            container.addView(btn);
+        }
+
+        // +/- controls
+        android.widget.Button addBtn    = findViewById(R.id.drawer_btn_add);
+        android.widget.Button removeBtn = findViewById(R.id.drawer_btn_remove);
+        if (addBtn != null) {
+            addBtn.setOnClickListener(v -> {
+                int cur = prefs.getInt("btn_count", DRAWER_BTN_DEFAULT_NAMES.length);
+                if (cur < 10) {
+                    prefs.edit().putInt("btn_count", cur + 1).apply();
+                    setupDrawerCommandButtons();
+                }
+            });
+        }
+        if (removeBtn != null) {
+            removeBtn.setOnClickListener(v -> {
+                int cur = prefs.getInt("btn_count", DRAWER_BTN_DEFAULT_NAMES.length);
+                if (cur > 1) {
+                    prefs.edit().putInt("btn_count", cur - 1).apply();
+                    setupDrawerCommandButtons();
+                }
+            });
         }
     }
 
     private void showEditDrawerButtonDialog(int idx) {
         SharedPreferences prefs = getSharedPreferences(DRAWER_PREFS, MODE_PRIVATE);
-        String currentName = prefs.getString("btn_" + (idx + 1) + "_name", DRAWER_BTN_DEFAULT_NAMES[idx]);
-        String currentCmd  = prefs.getString("btn_" + (idx + 1) + "_cmd",  DRAWER_BTN_DEFAULT_CMDS[idx]);
+        String defName = idx < DRAWER_BTN_DEFAULT_NAMES.length ? DRAWER_BTN_DEFAULT_NAMES[idx] : "";
+        String defCmd  = idx < DRAWER_BTN_DEFAULT_CMDS.length  ? DRAWER_BTN_DEFAULT_CMDS[idx]  : "";
+        String currentName = prefs.getString("btn_" + (idx + 1) + "_name", defName);
+        String currentCmd  = prefs.getString("btn_" + (idx + 1) + "_cmd",  defCmd);
 
         android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
         layout.setOrientation(android.widget.LinearLayout.VERTICAL);
@@ -1096,6 +1134,18 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             scriptBtn.setOnClickListener(v -> {
                 getDrawer().closeDrawers();
                 showMakeScriptDialog();
+            });
+        }
+
+        android.widget.Button pkgUpdateBtn = findViewById(R.id.drawer_pkg_update_btn);
+        if (pkgUpdateBtn != null) {
+            pkgUpdateBtn.setOnClickListener(v -> {
+                getDrawer().closeDrawers();
+                TerminalSession session = getCurrentSession();
+                if (session != null) {
+                    String cmd = "pkg update && pkg upgrade -y\n";
+                    session.write(cmd.getBytes(), 0, cmd.length());
+                }
             });
         }
     }
