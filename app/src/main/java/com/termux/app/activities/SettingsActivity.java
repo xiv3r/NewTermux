@@ -241,9 +241,9 @@ public class SettingsActivity extends AppCompatActivity {
             new Thread(() -> {
                 String error = null;
                 try {
-                    runCommand(new String[]{"termux-setup-storage"});
                     Process p = Runtime.getRuntime().exec(new String[]{
-                        "tar", "-zcvf", "/sdcard/Download/termux-home-backup.tar.gz",
+                        "/data/data/com.termux/files/usr/bin/tar", "-zcvf",
+                        "/sdcard/Download/termux-home-backup.tar.gz",
                         "-C", "/data/data/com.termux/files/home", "."
                     });
                     String errText = readStream(p.getErrorStream());
@@ -271,9 +271,9 @@ public class SettingsActivity extends AppCompatActivity {
             new Thread(() -> {
                 String error = null;
                 try {
-                    runCommand(new String[]{"termux-setup-storage"});
                     Process p = Runtime.getRuntime().exec(new String[]{
-                        "tar", "-zcvf", "/sdcard/Download/termux-full-backup.tar.gz",
+                        "/data/data/com.termux/files/usr/bin/tar", "-zcvf",
+                        "/sdcard/Download/termux-full-backup.tar.gz",
                         "-C", "/data/data/com.termux/files", "./home", "./usr"
                     });
                     String errText = readStream(p.getErrorStream());
@@ -329,13 +329,13 @@ public class SettingsActivity extends AppCompatActivity {
                     Process p;
                     if (full) {
                         p = Runtime.getRuntime().exec(new String[]{
-                            "tar", "-zxvf", filePath,
+                            "/data/data/com.termux/files/usr/bin/tar", "-zxvf", filePath,
                             "-C", "/data/data/com.termux/files",
                             "--recursive-unlink", "--preserve-permissions"
                         });
                     } else {
                         p = Runtime.getRuntime().exec(new String[]{
-                            "tar", "-zxvf", filePath,
+                            "/data/data/com.termux/files/usr/bin/tar", "-zxvf", filePath,
                             "-C", "/data/data/com.termux/files/home"
                         });
                     }
