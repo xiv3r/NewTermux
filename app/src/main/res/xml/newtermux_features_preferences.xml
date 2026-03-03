@@ -43,6 +43,10 @@
             app:title="zsh-autosuggestions"
             app:summary="Fish-like inline suggestions (requires Oh My Zsh)"
             app:defaultValue="true" />
+        <SwitchPreferenceCompat app:key="zsh_syntax_highlighting"
+            app:title="zsh-syntax-highlighting"
+            app:summary="Color-code commands as you type — green=valid, red=not found (requires Oh My Zsh)"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
 

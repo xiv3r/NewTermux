@@ -396,7 +396,8 @@ public class SettingsActivity extends AppCompatActivity {
                 NewTermuxSettings.KEY_SHOW_CLEAR_BUTTON,
                 NewTermuxSettings.KEY_SESSION_TABS,
                 NewTermuxSettings.KEY_OH_MY_ZSH,
-                NewTermuxSettings.KEY_ZSH_AUTOSUGGESTIONS
+                NewTermuxSettings.KEY_ZSH_AUTOSUGGESTIONS,
+                NewTermuxSettings.KEY_ZSH_SYNTAX_HIGHLIGHTING
             };
             for (String key : boolKeys) {
                 SwitchPreferenceCompat pref = findPreference(key);
@@ -412,6 +413,8 @@ public class SettingsActivity extends AppCompatActivity {
 
                 if (NewTermuxSettings.KEY_ZSH_AUTOSUGGESTIONS.equals(key)) {
                     new Thread(() -> TermuxInstaller.setZshAutosuggestions(context, val)).start();
+                } else if (NewTermuxSettings.KEY_ZSH_SYNTAX_HIGHLIGHTING.equals(key)) {
+                    new Thread(() -> TermuxInstaller.setZshSyntaxHighlighting(context, val)).start();
                 } else if (NewTermuxSettings.KEY_OH_MY_ZSH.equals(key) && val) {
                     new Thread(() -> TermuxInstaller.installOhMyZsh(context)).start();
                 }
