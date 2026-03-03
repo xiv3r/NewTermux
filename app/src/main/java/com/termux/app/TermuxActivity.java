@@ -493,6 +493,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         // Ensure Oh My Zsh + zsh shell are set up for existing installs that skipped first-run.
         new Thread(() -> TermuxInstaller.installOhMyZsh(this)).start();
+
+        // Request storage permission on every launch; no-op if already granted.
+        requestStoragePermission(false);
     }
 
     @Override
