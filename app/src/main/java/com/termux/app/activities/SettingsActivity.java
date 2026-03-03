@@ -477,6 +477,60 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 });
             }
+
+            // --- Edit Startup Script ---
+            Preference editScriptPref = findPreference("edit_startup_script");
+            if (editScriptPref != null) {
+                editScriptPref.setOnPreferenceClickListener(pref -> {
+                    showStartupScriptEditor(context);
+                    return true;
+                });
+            }
+        }
+
+        private void showStartupScriptEditor(Context context) {
+            java.io.File scriptFile = new java.io.File(
+                com.termux.shared.termux.TermuxConstants.TERMUX_HOME_DIR_PATH,
+                ".termux/startup-script.sh");
+
+            String existing = "";
+            if (scriptFile.exists()) {
+                try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(scriptFile))) {
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) sb.append(line).append('\n');
+                    existing = sb.toString();
+                } catch (java.io.IOException ignored) {}
+            }
+
+            android.widget.EditText editor = new android.widget.EditText(context);
+            editor.setText(existing);
+            editor.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);
+            editor.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+            editor.setTypeface(android.graphics.Typeface.MONOSPACE);
+            int pad = (int) (12 * context.getResources().getDisplayMetrics().density);
+            editor.setPadding(pad, pad, pad, pad);
+            editor.setMinLines(10);
+
+            new AlertDialog.Builder(requireContext())
+                .setTitle("Edit Startup Script")
+                .setView(editor)
+                .setPositiveButton("Save", (d, w) -> {
+                    String content = editor.getText().toString();
+                    try {
+                        scriptFile.getParentFile().mkdirs();
+                        try (java.io.FileWriter fw = new java.io.FileWriter(scriptFile)) {
+                            fw.write(content);
+                        }
+                        android.widget.Toast.makeText(context, "Startup script saved", android.widget.Toast.LENGTH_SHORT).show();
+                    } catch (java.io.IOException e) {
+                        android.widget.Toast.makeText(context, "Failed to save: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
         }
 
         private void showRestartWarning() {

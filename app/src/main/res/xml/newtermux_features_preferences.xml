@@ -45,6 +45,12 @@
             app:title="Startup Script"
             app:summary="Run ~/.termux/startup-script.sh in each new session"
             app:defaultValue="false" />
+        <Preference
+            app:key="edit_startup_script"
+            app:title="Edit Startup Script"
+            app:summary="Edit ~/.termux/startup-script.sh"
+            app:persistent="false"
+            app:dependency="startup_script_enabled" />
     </PreferenceCategory>
 
 
