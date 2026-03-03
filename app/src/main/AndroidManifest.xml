@@ -104,6 +104,13 @@
             android:theme="@style/Theme.NewTermux" />
 
         <activity
+            android:name=".app.activities.SshManagerActivity"
+            android:exported="false"
+            android:label="SSH Manager"
+            android:parentActivityName=".app.activities.SettingsActivity"
+            android:theme="@style/Theme.NewTermux" />
+
+        <activity
             android:name=".shared.activities.ReportActivity"
             android:theme="@style/Theme.MarkdownViewActivity.DayNight"
             android:documentLaunchMode="intoExisting" />

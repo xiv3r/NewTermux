@@ -42,6 +42,7 @@ import com.termux.shared.models.ReportInfo;
 import com.termux.app.models.UserAction;
 import com.termux.shared.interact.ShareUtils;
 import com.termux.shared.android.PackageUtils;
+import android.content.Intent;
 import com.termux.shared.termux.settings.preferences.TermuxAPIAppSharedPreferences;
 import com.termux.shared.termux.settings.preferences.TermuxFloatAppSharedPreferences;
 import com.termux.shared.termux.settings.preferences.TermuxTaskerAppSharedPreferences;
@@ -97,6 +98,14 @@ public class SettingsActivity extends AppCompatActivity {
                     configureDonatePreference(context);
                 }
             }.start();
+
+            Preference sshManagerPref = findPreference("ssh_manager");
+            if (sshManagerPref != null) {
+                sshManagerPref.setOnPreferenceClickListener(pref -> {
+                    startActivity(new Intent(context, SshManagerActivity.class));
+                    return true;
+                });
+            }
         }
 
         private void configureTermuxAPIPreference(@NonNull Context context) {
