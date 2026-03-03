@@ -373,7 +373,6 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
         if (!ctrlDown && !mVirtualControlKeyDown && !mVirtualFnKeyDown) {
             if (Character.isLetterOrDigit(codePoint) || codePoint == '-' || codePoint == '_') {
                 mCurrentCommand.append((char) codePoint);
-                mActivity.checkForAutocorrect(mCurrentCommand.toString());
             } else if (Character.isWhitespace(codePoint)) {
                 if (mCurrentCommand.length() > 0) {
                     mActivity.checkForAutocorrect(mCurrentCommand.toString());
