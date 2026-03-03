@@ -36,6 +36,22 @@
 
 
 
+    <PreferenceCategory app:title="Shell">
+        <Preference
+            app:key="install_zsh"
+            app:title="Install Zsh"
+            app:summary="Required for syntax highlighting and autosuggestions"
+            app:persistent="false" />
+        <SwitchPreferenceCompat app:key="zsh_autosuggestions"
+            app:title="zsh-autosuggestions"
+            app:summary="Fish-like inline suggestions as you type"
+            app:defaultValue="false" />
+        <SwitchPreferenceCompat app:key="zsh_syntax_highlighting"
+            app:title="zsh-syntax-highlighting"
+            app:summary="Color-code commands as you type — green=valid, red=not found"
+            app:defaultValue="false" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="Permissions">
         <Preference
             app:key="grant_storage_permission"

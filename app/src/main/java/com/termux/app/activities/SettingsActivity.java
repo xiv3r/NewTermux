@@ -416,6 +416,100 @@ public class SettingsActivity extends AppCompatActivity {
                 if (pref != null) pref.setOnPreferenceChangeListener(listener);
             }
 
+            // --- Shell section ---
+            boolean zshInstalled = new java.io.File(
+                com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH, "bin/zsh").exists();
+
+            SwitchPreferenceCompat autosuggPref   = findPreference(NewTermuxSettings.KEY_ZSH_AUTOSUGGESTIONS);
+            SwitchPreferenceCompat syntaxHlPref   = findPreference(NewTermuxSettings.KEY_ZSH_SYNTAX_HIGHLIGHTING);
+
+            if (autosuggPref != null) {
+                autosuggPref.setEnabled(zshInstalled);
+                autosuggPref.setChecked(NewTermuxSettings.isZshAutosuggestionsEnabled(context));
+                if (!zshInstalled) autosuggPref.setSummary("Install Zsh first to enable this");
+                autosuggPref.setOnPreferenceChangeListener((pref, newValue) -> {
+                    boolean val = (Boolean) newValue;
+                    NewTermuxSettings.set(context, NewTermuxSettings.KEY_ZSH_AUTOSUGGESTIONS, val);
+                    new Thread(() -> TermuxInstaller.setZshAutosuggestions(context, val)).start();
+                    showRestartWarning();
+                    return true;
+                });
+            }
+
+            if (syntaxHlPref != null) {
+                syntaxHlPref.setEnabled(zshInstalled);
+                syntaxHlPref.setChecked(NewTermuxSettings.isZshSyntaxHighlightingEnabled(context));
+                if (!zshInstalled) syntaxHlPref.setSummary("Install Zsh first to enable this");
+                syntaxHlPref.setOnPreferenceChangeListener((pref, newValue) -> {
+                    boolean val = (Boolean) newValue;
+                    NewTermuxSettings.set(context, NewTermuxSettings.KEY_ZSH_SYNTAX_HIGHLIGHTING, val);
+                    new Thread(() -> TermuxInstaller.setZshSyntaxHighlighting(context, val)).start();
+                    showRestartWarning();
+                    return true;
+                });
+            }
+
+            Preference installZshPref = findPreference("install_zsh");
+            if (installZshPref != null) {
+                if (zshInstalled) {
+                    installZshPref.setTitle("Zsh");
+                    installZshPref.setSummary("✓ Installed");
+                    installZshPref.setEnabled(false);
+                } else {
+                    installZshPref.setOnPreferenceClickListener(pref -> {
+                        Activity activity = getActivity();
+                        if (activity == null) return true;
+                        ProgressDialog progress = new ProgressDialog(activity);
+                        progress.setMessage("Installing zsh…");
+                        progress.setCancelable(false);
+                        progress.show();
+                        new Thread(() -> {
+                            try {
+                                ProcessBuilder pb = new ProcessBuilder(
+                                    com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/apt",
+                                    "install", "-y", "zsh");
+                                pb.environment().put("PREFIX",
+                                    com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH);
+                                pb.environment().put("HOME",
+                                    com.termux.shared.termux.TermuxConstants.TERMUX_HOME_DIR_PATH);
+                                pb.environment().put("TMPDIR",
+                                    com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/tmp");
+                                pb.environment().put("PATH",
+                                    com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin");
+                                pb.environment().put("DEBIAN_FRONTEND", "noninteractive");
+                                pb.redirectErrorStream(true);
+                                Process p = pb.start();
+                                p.waitFor();
+                            } catch (Exception ignored) {}
+                            activity.runOnUiThread(() -> {
+                                progress.dismiss();
+                                boolean nowInstalled = new java.io.File(
+                                    com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH, "bin/zsh").exists();
+                                if (nowInstalled) {
+                                    installZshPref.setTitle("Zsh");
+                                    installZshPref.setSummary("✓ Installed");
+                                    installZshPref.setEnabled(false);
+                                    if (autosuggPref != null) {
+                                        autosuggPref.setEnabled(true);
+                                        autosuggPref.setSummary("Fish-like inline suggestions as you type");
+                                    }
+                                    if (syntaxHlPref != null) {
+                                        syntaxHlPref.setEnabled(true);
+                                        syntaxHlPref.setSummary("Color-code commands as you type — green=valid, red=not found");
+                                    }
+                                } else {
+                                    android.widget.Toast.makeText(context,
+                                        "Zsh installation failed. Try running: pkg install zsh",
+                                        android.widget.Toast.LENGTH_LONG).show();
+                                }
+                            });
+                        }).start();
+                        return true;
+                    });
+                }
+            }
+
+            // --- Storage permission ---
             Preference storagePermPref = findPreference("grant_storage_permission");
             if (storagePermPref != null) {
                 storagePermPref.setOnPreferenceClickListener(pref -> {
@@ -426,6 +520,16 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 });
             }
+        }
+
+        private void showRestartWarning() {
+            Activity activity = getActivity();
+            if (activity == null) return;
+            new AlertDialog.Builder(activity)
+                .setTitle("Restart Required")
+                .setMessage("Start a new terminal session for this change to take effect.")
+                .setPositiveButton("OK", null)
+                .show();
         }
     }
 
