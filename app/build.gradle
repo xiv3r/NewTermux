@@ -92,10 +92,20 @@ android {
             minifyEnabled true
             shrinkResources false // Reproducible builds
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField "boolean", "IS_DEMO", "false"
         }
 
         debug {
             signingConfig signingConfigs.debug
+            buildConfigField "boolean", "IS_DEMO", "false"
+        }
+
+        // Test/coexist build: installs as com.termux.demo alongside real Termux and NewTermux.
+        // Fake shell — all Settings/toolbar/drawer/Text Expansion UI works; no real commands run.
+        demo {
+            initWith debug
+            applicationIdSuffix ".demo"
+            buildConfigField "boolean", "IS_DEMO", "true"
         }
     }
 
@@ -137,6 +147,9 @@ android {
             } else if (variant.buildType.name == "release") {
                 def abi = output.getFilter(com.android.build.OutputFile.ABI)
                 outputFileName = new File("termux-app_" + (apkVersionTag ? apkVersionTag : project.ext.packageVariant + "-" + "release") + "_" + (abi ? abi : "universal") + ".apk")
+            } else if (variant.buildType.name == "demo") {
+                def abi = output.getFilter(com.android.build.OutputFile.ABI)
+                outputFileName = new File("newtermux-test-coexist_" + (apkVersionTag ? apkVersionTag : "demo") + "_" + (abi ? abi : "universal") + ".apk")
             }
         }
     }

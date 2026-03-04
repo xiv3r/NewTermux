@@ -10,6 +10,7 @@ import android.system.Os;
 import android.util.Pair;
 import android.view.WindowManager;
 
+import com.termux.BuildConfig;
 import com.termux.R;
 import com.termux.shared.file.FileUtils;
 import com.termux.shared.termux.crash.TermuxCrashUtils;
@@ -66,8 +67,46 @@ public final class TermuxInstaller {
 
     private static final String LOG_TAG = "TermuxInstaller";
 
+    private static final String DEMO_SHELL_SCRIPT =
+        "#!/system/bin/sh\n" +
+        "clear\n" +
+        "echo ''\n" +
+        "echo '  ╔══════════════════════════════════════════╗'\n" +
+        "echo '  ║      NewTermux — Test / Coexist Mode     ║'\n" +
+        "echo '  ║  Settings, toolbar & UI are fully live.  ║'\n" +
+        "echo '  ║  Shell commands are disabled here.       ║'\n" +
+        "echo '  ╚══════════════════════════════════════════╝'\n" +
+        "echo ''\n" +
+        "while true; do\n" +
+        "  printf '$ '\n" +
+        "  read line\n" +
+        "  [ -n \"$line\" ] && echo \"[test-mode] $line\"\n" +
+        "done\n";
+
     /** Performs bootstrap setup if necessary. */
     static void setupBootstrapIfNeeded(final Activity activity, final Runnable whenDone) {
+        // Demo/coexist build: skip the real bootstrap. Write a fake interactive shell and proceed.
+        if (BuildConfig.IS_DEMO) {
+            new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        File binDir = new File(TERMUX_PREFIX_DIR_PATH, "bin");
+                        binDir.mkdirs();
+                        File fakeShell = new File(binDir, "bash");
+                        try (FileOutputStream fos = new FileOutputStream(fakeShell)) {
+                            fos.write(DEMO_SHELL_SCRIPT.getBytes(StandardCharsets.UTF_8));
+                        }
+                        Os.chmod(fakeShell.getAbsolutePath(), 0755);
+                    } catch (Exception e) {
+                        Logger.logError(LOG_TAG, "Demo shell setup failed: " + e.getMessage());
+                    }
+                    activity.runOnUiThread(whenDone);
+                }
+            }.start();
+            return;
+        }
+
         String bootstrapErrorMessage;
         Error filesDirectoryAccessibleError;
 
