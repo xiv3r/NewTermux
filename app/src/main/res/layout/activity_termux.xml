@@ -39,49 +39,12 @@
             <LinearLayout
                 android:id="@+id/left_drawer"
                 android:layout_width="240dp"
-                android:layout_height="match_parent"
-                android:layout_gravity="start"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start|top"
                 android:descendantFocusability="blocksDescendants"
                 android:orientation="vertical"
                 android:padding="12dp"
                 android:background="?attr/termuxActivityDrawerBackground">
-
-                <!-- Utility buttons: Export, Script, Update — same style as cmd buttons -->
-                <LinearLayout
-                    android:id="@+id/drawer_util_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/drawer_export_btn"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="6dp"
-                        android:text="Export Screen" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/drawer_script_btn"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="6dp"
-                        android:text="Make Script" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/drawer_pkg_update_btn"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp"
-                        android:text="Pkg Update" />
-
-                </LinearLayout>
-
-                <View
-                    android:id="@+id/drawer_util_divider"
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="?android:attr/listDivider"
-                    android:layout_marginBottom="8dp" />
 
                 <!-- Dynamic command buttons (populated in code) -->
                 <LinearLayout

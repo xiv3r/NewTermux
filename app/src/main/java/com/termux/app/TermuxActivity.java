@@ -331,7 +331,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             });
 
         setupDrawerCommandButtons();
-        setupDrawerUtilityButtons();
 
         setupNewTermuxFeatures();
 
@@ -454,6 +453,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         // Session chips
         updateSessionTabs();
+
+        // Drawer command buttons
+        setupDrawerCommandButtons();
     }
 
     private void applyFeatureSettings() {
@@ -467,18 +469,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         // Autocorrect initial enabled state
         if (mAutoCorrectHandler != null)
             mAutoCorrectHandler.setEnabled(NewTermuxSettings.isAutocorrectEnabled(this));
-        // Drawer buttons
-        boolean showUtil      = NewTermuxSettings.isShowDrawerExportScript(this);
-        boolean showPkgUpdate = NewTermuxSettings.isShowDrawerPkgUpdate(this);
-        boolean showCmd       = NewTermuxSettings.isShowDrawerCmdButtons(this);
-        boolean showAnyUtil   = showUtil || showPkgUpdate;
-        setVisible(R.id.drawer_util_row,       showAnyUtil);
-        setVisible(R.id.drawer_export_btn,     showUtil);
-        setVisible(R.id.drawer_script_btn,     showUtil);
-        setVisible(R.id.drawer_pkg_update_btn, showPkgUpdate);
-        setVisible(R.id.drawer_util_divider,   showAnyUtil && showCmd);
-        setVisible(R.id.drawer_cmd_container,  showCmd);
-        setVisible(R.id.drawer_cmd_controls,   showCmd);
     }
 
     private void setVisible(int id, boolean visible) {
@@ -1083,6 +1073,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         if (container == null) return;
         container.removeAllViews();
 
+        int accentColor = NewTermuxTheme.getAccentColor(this);
+        android.content.res.ColorStateList accentCsl =
+            android.content.res.ColorStateList.valueOf(accentColor);
+
         int marginBtm = Math.round(6 * getResources().getDisplayMetrics().density);
         for (int i = 0; i < count; i++) {
             final int idx = i;
@@ -1097,6 +1091,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 LinearLayout.LayoutParams.WRAP_CONTENT);
             lp.bottomMargin = marginBtm;
             btn.setLayoutParams(lp);
+            btn.setBackgroundTintList(accentCsl);
 
             boolean isUnset = name.isEmpty() && cmd.isEmpty();
             btn.setText(isUnset ? "long press to set" : (name.isEmpty() ? "Button " + (i + 1) : name));
@@ -1105,13 +1100,18 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             btn.setOnClickListener(v -> {
                 String c = prefs.getString("btn_" + (idx + 1) + "_cmd",
                     idx < DRAWER_BTN_DEFAULT_CMDS.length ? DRAWER_BTN_DEFAULT_CMDS[idx] : "");
-                if (!c.isEmpty()) {
-                    TerminalSession session = getCurrentSession();
-                    if (session != null) {
-                        byte[] bytes = (c + "\n").getBytes();
-                        session.write(bytes, 0, bytes.length);
+                String n = prefs.getString("btn_" + (idx + 1) + "_name",
+                    idx < DRAWER_BTN_DEFAULT_NAMES.length ? DRAWER_BTN_DEFAULT_NAMES[idx] : "");
+                String label = n.isEmpty() ? "Button " + (idx + 1) : n;
+                if (mTermuxTerminalSessionActivityClient != null) {
+                    mTermuxTerminalSessionActivityClient.addNewSession(false, label);
+                    if (!c.isEmpty()) {
+                        final String finalCmd = c + "\n";
+                        mTerminalView.post(() -> {
+                            TerminalSession s = getCurrentSession();
+                            if (s != null) s.write(finalCmd.getBytes(), 0, finalCmd.length());
+                        });
                     }
-                    getDrawer().closeDrawers();
                 }
             });
             btn.setOnLongClickListener(v -> {
@@ -1121,10 +1121,12 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             container.addView(btn);
         }
 
-        // +/- controls
-        android.widget.Button addBtn    = findViewById(R.id.drawer_btn_add);
-        android.widget.Button removeBtn = findViewById(R.id.drawer_btn_remove);
+        // +/- controls — apply accent stroke/text color
+        MaterialButton addBtn    = findViewById(R.id.drawer_btn_add);
+        MaterialButton removeBtn = findViewById(R.id.drawer_btn_remove);
         if (addBtn != null) {
+            addBtn.setStrokeColor(accentCsl);
+            addBtn.setTextColor(accentColor);
             addBtn.setOnClickListener(v -> {
                 int cur = prefs.getInt("btn_count", DRAWER_BTN_DEFAULT_NAMES.length);
                 if (cur < 10) {
@@ -1134,6 +1136,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             });
         }
         if (removeBtn != null) {
+            removeBtn.setStrokeColor(accentCsl);
+            removeBtn.setTextColor(accentColor);
             removeBtn.setOnClickListener(v -> {
                 int cur = prefs.getInt("btn_count", DRAWER_BTN_DEFAULT_NAMES.length);
                 if (cur > 1) {
@@ -1185,36 +1189,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
 
 
-
-    private void setupDrawerUtilityButtons() {
-        android.widget.Button exportBtn = findViewById(R.id.drawer_export_btn);
-        if (exportBtn != null) {
-            exportBtn.setOnClickListener(v -> {
-                getDrawer().closeDrawers();
-                mScreenExportSaver.launch("terminal-screen.txt");
-            });
-        }
-
-        android.widget.Button scriptBtn = findViewById(R.id.drawer_script_btn);
-        if (scriptBtn != null) {
-            scriptBtn.setOnClickListener(v -> {
-                getDrawer().closeDrawers();
-                showMakeScriptDialog();
-            });
-        }
-
-        android.widget.Button pkgUpdateBtn = findViewById(R.id.drawer_pkg_update_btn);
-        if (pkgUpdateBtn != null) {
-            pkgUpdateBtn.setOnClickListener(v -> {
-                getDrawer().closeDrawers();
-                TerminalSession session = getCurrentSession();
-                if (session != null) {
-                    String cmd = "pkg update && pkg upgrade -y\n";
-                    session.write(cmd.getBytes(), 0, cmd.length());
-                }
-            });
-        }
-    }
 
     private void showMakeScriptDialog() {
         new Thread(() -> {
