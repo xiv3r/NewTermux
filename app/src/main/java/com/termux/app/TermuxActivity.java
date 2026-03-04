@@ -856,7 +856,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             });
 
             chip.setOnLongClickListener(v -> {
-                if (mTermuxTerminalSessionActivityClient != null)
+                if (mTermuxTerminalSessionActivityClient != null
+                        && com.newtermux.features.NewTermuxSettings.isSessionRenameEnabled(this))
                     mTermuxTerminalSessionActivityClient.renameSession(session);
                 return true;
             });

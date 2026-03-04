@@ -20,6 +20,8 @@ public class NewTermuxSettings {
     public static final String KEY_SHOW_DRAWER_PKG_UPDATE    = "show_drawer_pkg_update";
     public static final String KEY_SHOW_DRAWER_CMD_BUTTONS   = "show_drawer_cmd_buttons";
     public static final String KEY_STARTUP_SCRIPT_ENABLED    = "startup_script_enabled";
+    public static final String KEY_URL_DETECTION_ENABLED     = "url_detection_enabled";
+    public static final String KEY_SESSION_RENAME_ENABLED    = "session_rename_enabled";
 
     private static SharedPreferences prefs(Context ctx) {
         return ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -68,6 +70,12 @@ public class NewTermuxSettings {
     public static boolean isStartupScriptEnabled(Context ctx) {
         return prefs(ctx).getBoolean(KEY_STARTUP_SCRIPT_ENABLED, false);
     }
+    public static boolean isUrlDetectionEnabled(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_URL_DETECTION_ENABLED, true);
+    }
+    public static boolean isSessionRenameEnabled(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_SESSION_RENAME_ENABLED, true);
+    }
 
     // Pending command — written by Settings, consumed and cleared by TermuxActivity.onResume()
     public static String getPendingCommand(Context ctx) {
@@ -101,6 +109,8 @@ public class NewTermuxSettings {
             case KEY_SHOW_DRAWER_PKG_UPDATE:       return isShowDrawerPkgUpdate(ctx);
             case KEY_SHOW_DRAWER_CMD_BUTTONS:      return isShowDrawerCmdButtons(ctx);
             case KEY_STARTUP_SCRIPT_ENABLED:       return isStartupScriptEnabled(ctx);
+            case KEY_URL_DETECTION_ENABLED:        return isUrlDetectionEnabled(ctx);
+            case KEY_SESSION_RENAME_ENABLED:       return isSessionRenameEnabled(ctx);
             default:                               return prefs(ctx).getBoolean(key, false);
         }
     }

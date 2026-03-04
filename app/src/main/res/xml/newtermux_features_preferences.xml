@@ -11,6 +11,11 @@
             app:title="Command Autocorrect"
             app:summary="Suggest corrections for mistyped commands (spacebar)"
             app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="url_detection_enabled"
+            app:title="URL Detection"
+            app:summary="Long-press a URL in the terminal to open or copy it"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Toolbar Buttons">
@@ -36,6 +41,11 @@
         <SwitchPreferenceCompat app:key="session_tabs"
             app:title="Show Session Tabs"
             app:summary="Show session tab chips at the top"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="session_rename_enabled"
+            app:title="Session Renaming"
+            app:summary="Long-press a session tab to rename it"
             app:defaultValue="true" />
     </PreferenceCategory>
 

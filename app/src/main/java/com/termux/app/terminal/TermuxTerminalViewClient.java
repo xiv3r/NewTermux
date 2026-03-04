@@ -366,6 +366,7 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     @Override
     public boolean onLongPress(MotionEvent event) {
         // Detect URL at the long-pressed position and show Open/Copy dialog
+        if (!com.newtermux.features.NewTermuxSettings.isUrlDetectionEnabled(mActivity)) return false;
         try {
             int[] columnAndRow = mActivity.getTerminalView().getColumnAndRow(event, true);
             String word = mActivity.getCurrentSession().getEmulator().getScreen()
