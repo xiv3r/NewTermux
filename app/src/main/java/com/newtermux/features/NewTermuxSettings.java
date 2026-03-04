@@ -23,6 +23,8 @@ public class NewTermuxSettings {
     public static final String KEY_URL_DETECTION_ENABLED     = "url_detection_enabled";
     public static final String KEY_SESSION_RENAME_ENABLED    = "session_rename_enabled";
     public static final String KEY_TEXT_EXPANSION_ENABLED    = "text_expansion_enabled";
+    public static final String KEY_EXTRA_KEYS_VISIBLE        = "extra_keys_visible";
+    public static final String KEY_EXTRA_KEYS_IN_DRAWER      = "extra_keys_in_drawer";
 
     private static SharedPreferences prefs(Context ctx) {
         return ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -80,6 +82,12 @@ public class NewTermuxSettings {
     public static boolean isTextExpansionEnabled(Context ctx) {
         return prefs(ctx).getBoolean(KEY_TEXT_EXPANSION_ENABLED, false);
     }
+    public static boolean isExtraKeysVisible(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_EXTRA_KEYS_VISIBLE, true);
+    }
+    public static boolean isExtraKeysInDrawer(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_EXTRA_KEYS_IN_DRAWER, false);
+    }
 
     // Pending command — written by Settings, consumed and cleared by TermuxActivity.onResume()
     public static String getPendingCommand(Context ctx) {
@@ -116,6 +124,8 @@ public class NewTermuxSettings {
             case KEY_URL_DETECTION_ENABLED:        return isUrlDetectionEnabled(ctx);
             case KEY_SESSION_RENAME_ENABLED:       return isSessionRenameEnabled(ctx);
             case KEY_TEXT_EXPANSION_ENABLED:       return isTextExpansionEnabled(ctx);
+            case KEY_EXTRA_KEYS_VISIBLE:           return isExtraKeysVisible(ctx);
+            case KEY_EXTRA_KEYS_IN_DRAWER:         return isExtraKeysInDrawer(ctx);
             default:                               return prefs(ctx).getBoolean(key, false);
         }
     }

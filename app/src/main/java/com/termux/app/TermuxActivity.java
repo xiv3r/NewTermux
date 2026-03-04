@@ -159,6 +159,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
      */
     TermuxTerminalExtraKeys mTermuxTerminalExtraKeys;
 
+    /** Whether extra keys were placed in the right drawer at activity creation time. */
+    private boolean mExtraKeysInDrawerModeAtCreation = false;
+
     /**
      * The termux sessions list controller.
      */
@@ -389,6 +392,21 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         Logger.logVerbose(LOG_TAG, "onResume");
 
         if (mIsInvalidState) return;
+
+        // Re-apply extra keys settings when returning from Settings
+        boolean currentDrawerMode = com.newtermux.features.NewTermuxSettings.isExtraKeysInDrawer(this);
+        if (currentDrawerMode != mExtraKeysInDrawerModeAtCreation) {
+            recreate();
+            return;
+        }
+        if (!currentDrawerMode) {
+            ViewPager vp = getTerminalToolbarViewPager();
+            if (vp != null && mPreferences != null) {
+                boolean show = com.newtermux.features.NewTermuxSettings.isExtraKeysVisible(this)
+                    && mPreferences.shouldShowTerminalToolbar();
+                vp.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+        }
 
         if (mTermuxTerminalSessionActivityClient != null)
             mTermuxTerminalSessionActivityClient.onResume();
@@ -662,19 +680,40 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             mTermuxTerminalViewClient, mTermuxTerminalSessionActivityClient);
 
         final ViewPager terminalToolbarViewPager = getTerminalToolbarViewPager();
-        if (mPreferences.shouldShowTerminalToolbar()) terminalToolbarViewPager.setVisibility(View.VISIBLE);
 
         ViewGroup.LayoutParams layoutParams = terminalToolbarViewPager.getLayoutParams();
         mTerminalToolbarDefaultHeight = layoutParams.height;
 
-        setTerminalToolbarHeight();
+        boolean inDrawer = com.newtermux.features.NewTermuxSettings.isExtraKeysInDrawer(this);
+        mExtraKeysInDrawerModeAtCreation = inDrawer;
+        getDrawer().setDrawerLockMode(
+            inDrawer ? DrawerLayout.LOCK_MODE_UNLOCKED : DrawerLayout.LOCK_MODE_LOCKED_CLOSED,
+            Gravity.END);
 
-        String savedTextInput = null;
-        if (savedInstanceState != null)
-            savedTextInput = savedInstanceState.getString(ARG_TERMINAL_TOOLBAR_TEXT_INPUT);
+        if (inDrawer) {
+            // Route extra keys into the right drawer instead of the bottom ViewPager
+            ExtraKeysView rightEkv = (ExtraKeysView) findViewById(R.id.right_drawer_extra_keys);
+            if (rightEkv != null) {
+                rightEkv.setExtraKeysViewClient(mTermuxTerminalExtraKeys);
+                rightEkv.setButtonTextAllCaps(getProperties().shouldExtraKeysTextBeAllCaps());
+                mExtraKeysView = rightEkv;
+                rightEkv.reload(mTermuxTerminalExtraKeys.getExtraKeysInfo(), mTerminalToolbarDefaultHeight);
+            }
+            // ViewPager stays GONE; no adapter set in drawer mode
+        } else {
+            if (com.newtermux.features.NewTermuxSettings.isExtraKeysVisible(this)
+                    && mPreferences.shouldShowTerminalToolbar()) {
+                terminalToolbarViewPager.setVisibility(View.VISIBLE);
+            }
+            setTerminalToolbarHeight();
 
-        terminalToolbarViewPager.setAdapter(new TerminalToolbarViewPager.PageAdapter(this, savedTextInput));
-        terminalToolbarViewPager.addOnPageChangeListener(new TerminalToolbarViewPager.OnPageChangeListener(this, terminalToolbarViewPager));
+            String savedTextInput = null;
+            if (savedInstanceState != null)
+                savedTextInput = savedInstanceState.getString(ARG_TERMINAL_TOOLBAR_TEXT_INPUT);
+
+            terminalToolbarViewPager.setAdapter(new TerminalToolbarViewPager.PageAdapter(this, savedTextInput));
+            terminalToolbarViewPager.addOnPageChangeListener(new TerminalToolbarViewPager.OnPageChangeListener(this, terminalToolbarViewPager));
+        }
     }
 
     private void setTerminalToolbarHeight() {
@@ -689,6 +728,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     }
 
     public void toggleTerminalToolbar() {
+        if (mExtraKeysInDrawerModeAtCreation) return; // in drawer mode — use right drawer swipe instead
         final ViewPager terminalToolbarViewPager = getTerminalToolbarViewPager();
         if (terminalToolbarViewPager == null) return;
 

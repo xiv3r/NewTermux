@@ -16,6 +16,16 @@
             app:title="URL Detection"
             app:summary="Long-press a URL in the terminal to open or copy it"
             app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="extra_keys_visible"
+            app:title="Show Extra Keys Toolbar"
+            app:summary="Show the ESC, TAB, arrow key row above the keyboard"
+            app:defaultValue="true" />
+        <SwitchPreferenceCompat
+            app:key="extra_keys_in_drawer"
+            app:title="Extra Keys in Right Drawer"
+            app:summary="Move extra keys to a swipeable right-side drawer — takes effect on restart"
+            app:defaultValue="false" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Toolbar Buttons">

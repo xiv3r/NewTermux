@@ -127,6 +127,24 @@
 
             </LinearLayout>
 
+            <!-- Right drawer: extra keys panel, enabled via Settings → Features → Extra Keys in Right Drawer -->
+            <LinearLayout
+                android:id="@+id/right_drawer"
+                android:layout_width="280dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="end"
+                android:background="@color/black"
+                android:gravity="center_vertical"
+                android:orientation="vertical">
+
+                <include
+                    layout="@layout/view_terminal_toolbar_extra_keys"
+                    android:id="@+id/right_drawer_extra_keys"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
         </androidx.drawerlayout.widget.DrawerLayout>
 
         <androidx.viewpager.widget.ViewPager
