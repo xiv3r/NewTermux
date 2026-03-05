@@ -16,6 +16,7 @@ import android.widget.ListView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.termux.BuildConfig;
 import com.termux.R;
 import com.newtermux.features.NewTermuxSettings;
 import com.termux.shared.interact.ShareUtils;
@@ -383,8 +384,8 @@ public class TermuxTerminalSessionActivityClient extends TermuxTerminalSessionCl
             // Demo build: use the fake shell written to the demo's own files dir; also use a
             // writable working directory since /data/data/com.termux/ is not accessible.
             String executablePath = null;
-            if (com.termux.BuildConfig.IS_DEMO) {
-                executablePath = TermuxInstaller.sDemoShellPath;
+            if (BuildConfig.IS_DEMO) {
+                executablePath = new java.io.File(mActivity.getFilesDir(), "bin/bash").getAbsolutePath();
                 workingDirectory = mActivity.getFilesDir().getAbsolutePath();
             }
             TermuxSession newTermuxSession = service.createTermuxSession(executablePath, null, null, workingDirectory, isFailSafe, sessionName);
