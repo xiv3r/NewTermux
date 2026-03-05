@@ -107,6 +107,10 @@ android {
             applicationIdSuffix ".demo"
             buildConfigField "boolean", "IS_DEMO", "true"
             matchingFallbacks = ['debug']  // library submodules don't have 'demo', fall back to debug
+            // Override package name so sharedUserId and content provider authorities
+            // (com.termux.demo.documents, com.termux.demo.files) are unique and don't
+            // conflict with NewTermux (com.termux) or original Termux already installed.
+            manifestPlaceholders.TERMUX_PACKAGE_NAME = "com.termux.demo"
         }
     }
 
