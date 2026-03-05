@@ -104,6 +104,13 @@
             android:theme="@style/Theme.NewTermux" />
 
         <activity
+            android:name=".app.activities.PackageManagerActivity"
+            android:exported="false"
+            android:label="Package Manager"
+            android:parentActivityName=".app.activities.SettingsActivity"
+            android:theme="@style/Theme.NewTermux" />
+
+        <activity
             android:name=".app.activities.SshManagerActivity"
             android:exported="false"
             android:label="SSH Manager"

@@ -7,6 +7,12 @@
         app:fragment="com.termux.app.activities.SettingsActivity$AppearancePreferencesFragment"/>
 
     <Preference
+        app:key="package_manager"
+        app:title="Package Manager"
+        app:summary="Browse installed packages, search and install new ones"
+        app:persistent="false" />
+
+    <Preference
         app:key="ssh_manager"
         app:title="SSH Manager"
         app:summary="Save and connect to multiple SSH servers"

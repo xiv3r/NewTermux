@@ -99,6 +99,14 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             }.start();
 
+            Preference pkgManagerPref = findPreference("package_manager");
+            if (pkgManagerPref != null) {
+                pkgManagerPref.setOnPreferenceClickListener(pref -> {
+                    startActivity(new Intent(context, PackageManagerActivity.class));
+                    return true;
+                });
+            }
+
             Preference sshManagerPref = findPreference("ssh_manager");
             if (sshManagerPref != null) {
                 sshManagerPref.setOnPreferenceClickListener(pref -> {
