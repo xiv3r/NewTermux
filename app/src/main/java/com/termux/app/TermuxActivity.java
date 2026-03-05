@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import com.google.android.material.button.MaterialButton;
 
+import com.termux.BuildConfig;
 import com.termux.R;
 import com.termux.app.api.file.FileReceiverActivity;
 import com.termux.app.terminal.TermuxActivityRootView;
@@ -590,7 +591,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         new Thread(() -> TermuxInstaller.installZshPlugins(this)).start();
 
         // Request storage permission on every launch; no-op if already granted.
-        requestStoragePermission(false);
+        // Demo build: skip entirely — demo has no real filesystem, setupStorageSymlinks
+        // would try to access /data/data/com.termux/ which the demo package cannot reach.
+        if (!BuildConfig.IS_DEMO) requestStoragePermission(false);
     }
 
     @Override
@@ -1529,7 +1532,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Logger.logVerbose(LOG_TAG, "onActivityResult: requestCode: " + requestCode + ", resultCode: "  + resultCode + ", data: "  + IntentUtils.getIntentString(data));
-        if (requestCode == PermissionUtils.REQUEST_GRANT_STORAGE_PERMISSION) {
+        if (!BuildConfig.IS_DEMO && requestCode == PermissionUtils.REQUEST_GRANT_STORAGE_PERMISSION) {
             requestStoragePermission(true);
         }
     }
@@ -1538,7 +1541,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         Logger.logVerbose(LOG_TAG, "onRequestPermissionsResult: requestCode: " + requestCode + ", permissions: "  + Arrays.toString(permissions) + ", grantResults: "  + Arrays.toString(grantResults));
-        if (requestCode == PermissionUtils.REQUEST_GRANT_STORAGE_PERMISSION) {
+        if (!BuildConfig.IS_DEMO && requestCode == PermissionUtils.REQUEST_GRANT_STORAGE_PERMISSION) {
             requestStoragePermission(true);
         } else if (requestCode == REQUEST_RECORD_AUDIO) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
