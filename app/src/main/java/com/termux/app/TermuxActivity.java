@@ -794,6 +794,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         View btnPackages = findViewById(R.id.btn_packages_menu);
         if (btnPackages != null) {
             btnPackages.setOnClickListener(v -> mPackageManagerMenu.show(v));
+            btnPackages.setOnLongClickListener(v -> {
+                startActivity(new Intent(this, com.termux.app.activities.PackageManagerActivity.class));
+                return true;
+            });
         }
 
         View btnClear = findViewById(R.id.btn_clear_terminal);
