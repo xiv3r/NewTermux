@@ -2,7 +2,7 @@
 
 A personal fork of Termux with a modernized UI and extended feature set. Installs as `com.termux` — a drop-in replacement.
 
-**Latest stable:** v2.2.0 · [Download APK](https://github.com/The412Banner/NewTermux/releases/latest)
+**Latest stable:** · [Download APK](https://github.com/The412Banner/NewTermux/releases/latest)
 
 ---
 
