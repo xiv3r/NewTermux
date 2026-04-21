@@ -57,9 +57,6 @@ class TerminalViewPreferencesDataStore extends PreferenceDataStore {
             case "terminal_margin_adjustment":
                     mPreferences.setTerminalMarginAdjustment(value);
                 break;
-            case "show_claude_chat_button":
-                mPreferences.setShowClaudeChatButton(value);
-                break;
             default:
                 break;
         }
@@ -72,8 +69,6 @@ class TerminalViewPreferencesDataStore extends PreferenceDataStore {
         switch (key) {
             case "terminal_margin_adjustment":
                 return mPreferences.isTerminalMarginAdjustmentEnabled();
-            case "show_claude_chat_button":
-                return mPreferences.isShowClaudeChatButtonEnabled();
             default:
                 return false;
         }

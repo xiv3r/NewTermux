@@ -211,7 +211,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private RootToggleManager mRootToggleManager;
     private AutoCorrectHandler mAutoCorrectHandler;
     private com.newtermux.features.PackageManagerMenu mPackageManagerMenu;
-    private com.newtermux.features.ClaudeChatLauncher mClaudeChatLauncher;
     private View mAutocorrectBar;
     private TextView mAutocorrectText;
     private String mPendingCorrection;
@@ -770,7 +769,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         mRootToggleManager = RootToggleManager.getInstance();
         mAutoCorrectHandler = new AutoCorrectHandler(this);
         mPackageManagerMenu = new com.newtermux.features.PackageManagerMenu(this);
-        mClaudeChatLauncher = new com.newtermux.features.ClaudeChatLauncher(this);
 
         // Autocorrect UI
         mAutocorrectBar = findViewById(R.id.autocorrect_bar);
@@ -806,13 +804,6 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 startActivity(new Intent(this, com.termux.app.activities.PackageManagerActivity.class));
                 return true;
             });
-        }
-
-        View btnClaude = findViewById(R.id.btn_claude_chat);
-        if (btnClaude != null) {
-            boolean showClaude = mPreferences != null && mPreferences.isShowClaudeChatButtonEnabled() && mClaudeChatLauncher.isInstalled();
-            btnClaude.setVisibility(showClaude ? View.VISIBLE : View.GONE);
-            btnClaude.setOnClickListener(v -> mClaudeChatLauncher.launch());
         }
 
         View btnClear = findViewById(R.id.btn_clear_terminal);

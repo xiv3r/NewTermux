@@ -92,16 +92,6 @@ public class TermuxAppSharedPreferences extends AppSharedPreferences {
         SharedPreferenceUtils.setBoolean(mSharedPreferences, TERMUX_APP.KEY_TERMINAL_MARGIN_ADJUSTMENT, value, false);
     }
 
-    public boolean isShowClaudeChatButtonEnabled() {
-        return SharedPreferenceUtils.getBoolean(mSharedPreferences, TERMUX_APP.KEY_SHOW_CLAUDE_CHAT_BUTTON, TERMUX_APP.DEFAULT_SHOW_CLAUDE_CHAT_BUTTON);
-    }
-
-    public void setShowClaudeChatButton(boolean value) {
-        SharedPreferenceUtils.setBoolean(mSharedPreferences, TERMUX_APP.KEY_SHOW_CLAUDE_CHAT_BUTTON, value, false);
-    }
-
-
-
     public boolean isSoftKeyboardEnabled() {
         return SharedPreferenceUtils.getBoolean(mSharedPreferences, TERMUX_APP.KEY_SOFT_KEYBOARD_ENABLED, TERMUX_APP.DEFAULT_VALUE_KEY_SOFT_KEYBOARD_ENABLED);
     }
