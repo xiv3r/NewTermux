@@ -885,35 +885,60 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         java.util.List<com.termux.shared.termux.shell.command.runner.terminal.TermuxSession> sessions = mTermuxService.getTermuxSessions();
         TerminalSession currentSession = getCurrentSession();
 
-        int pipWidthPx  = (int) (getResources().getDisplayMetrics().density * 72);
-        int pipHeightPx = (int) (getResources().getDisplayMetrics().density * 48);
-        int marginPx    = (int) (getResources().getDisplayMetrics().density * 4);
+        float density   = getResources().getDisplayMetrics().density;
+        int pipWidthPx  = (int) (density * 58);
+        int pipHeightPx = (int) (density * 38);
+        int marginPx    = (int) (density * 4);
+        int labelGapPx  = (int) (density * 2);
 
         for (int i = 0; i < sessions.size(); i++) {
             com.termux.shared.termux.shell.command.runner.terminal.TermuxSession termuxSession = sessions.get(i);
             TerminalSession session = termuxSession.getTerminalSession();
 
+            // Vertical wrapper: name label on top, live pip below
+            LinearLayout wrapper = new LinearLayout(this);
+            wrapper.setOrientation(LinearLayout.VERTICAL);
+            wrapper.setGravity(Gravity.CENTER_HORIZONTAL);
+            LinearLayout.LayoutParams wrapperLp = new LinearLayout.LayoutParams(pipWidthPx, LinearLayout.LayoutParams.WRAP_CONTENT);
+            wrapperLp.setMarginEnd(marginPx);
+            wrapper.setLayoutParams(wrapperLp);
+
+            // Session name label
+            android.widget.TextView nameLabel = new android.widget.TextView(this);
+            String displayName = (session.mSessionName != null && !session.mSessionName.isEmpty())
+                    ? session.mSessionName : "#" + (i + 1);
+            nameLabel.setText(displayName);
+            nameLabel.setTextSize(10f);
+            nameLabel.setTextColor(0xFFAAAAAA);
+            nameLabel.setMaxLines(1);
+            nameLabel.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            nameLabel.setGravity(Gravity.CENTER_HORIZONTAL);
+            LinearLayout.LayoutParams nameLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            nameLp.bottomMargin = labelGapPx;
+            nameLabel.setLayoutParams(nameLp);
+            wrapper.addView(nameLabel);
+
+            // Live pip preview
             MiniTerminalPipView pip = new MiniTerminalPipView(this);
             pip.setSession(session);
             pip.setActive(session == currentSession);
+            pip.setLayoutParams(new LinearLayout.LayoutParams(pipWidthPx, pipHeightPx));
+            wrapper.addView(pip);
 
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(pipWidthPx, pipHeightPx);
-            lp.setMarginEnd(marginPx);
-            pip.setLayoutParams(lp);
-
-            pip.setOnClickListener(v -> {
+            wrapper.setOnClickListener(v -> {
                 if (mTermuxTerminalSessionActivityClient != null) {
                     mTermuxTerminalSessionActivityClient.setCurrentSession(session);
                     updateSessionTabs();
                 }
             });
 
-            pip.setOnLongClickListener(v -> {
+            wrapper.setOnLongClickListener(v -> {
                 showSessionBottomSheet(session);
                 return true;
             });
 
-            mSessionPipContainer.addView(pip);
+            mSessionPipContainer.addView(wrapper);
         }
     }
 
@@ -947,11 +972,17 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         if (mSessionPipContainer == null) return;
         for (int i = 0; i < mSessionPipContainer.getChildCount(); i++) {
             android.view.View child = mSessionPipContainer.getChildAt(i);
-            if (child instanceof MiniTerminalPipView) {
-                MiniTerminalPipView pip = (MiniTerminalPipView) child;
-                if (pip.getSession() == session) {
-                    pip.notifyUpdate();
-                    return;
+            if (child instanceof ViewGroup) {
+                ViewGroup wrapper = (ViewGroup) child;
+                for (int j = 0; j < wrapper.getChildCount(); j++) {
+                    android.view.View inner = wrapper.getChildAt(j);
+                    if (inner instanceof MiniTerminalPipView) {
+                        MiniTerminalPipView pip = (MiniTerminalPipView) inner;
+                        if (pip.getSession() == session) {
+                            pip.notifyUpdate();
+                            return;
+                        }
+                    }
                 }
             }
         }
