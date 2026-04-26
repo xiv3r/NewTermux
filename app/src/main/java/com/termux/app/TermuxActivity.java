@@ -885,8 +885,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         TerminalSession currentSession = getCurrentSession();
 
         float density   = getResources().getDisplayMetrics().density;
-        int pipWidthPx  = (int) (density * 72);
-        int pipHeightPx = (int) (density * 48);
+        int pipWidthPx  = (int) (density * 86);
+        int pipHeightPx = (int) (density * 58);
         int marginPx    = (int) (density * 4);
         int labelGapPx  = (int) (density * 2);
 

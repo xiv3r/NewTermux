@@ -134,7 +134,7 @@
     <HorizontalScrollView
         android:id="@+id/session_tabs_scroll"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="80dp"
         android:scrollbars="none"
         android:background="@color/nt_tab_bg">
 
