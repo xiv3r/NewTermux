@@ -29,7 +29,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 
 import com.termux.BuildConfig;
@@ -886,8 +885,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         TerminalSession currentSession = getCurrentSession();
 
         float density   = getResources().getDisplayMetrics().density;
-        int pipWidthPx  = (int) (density * 58);
-        int pipHeightPx = (int) (density * 38);
+        int pipWidthPx  = (int) (density * 72);
+        int pipHeightPx = (int) (density * 48);
         int marginPx    = (int) (density * 4);
         int labelGapPx  = (int) (density * 2);
 
@@ -934,7 +933,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             });
 
             wrapper.setOnLongClickListener(v -> {
-                showSessionBottomSheet(session);
+                showSessionPopupMenu(v, session);
                 return true;
             });
 
@@ -942,26 +941,22 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
     }
 
-    private void showSessionBottomSheet(TerminalSession session) {
-        BottomSheetDialog sheet = new BottomSheetDialog(this);
-        View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_session_options, null);
-        sheet.setContentView(sheetView);
-
-        sheetView.findViewById(R.id.session_option_rename).setOnClickListener(v -> {
-            sheet.dismiss();
-            if (mTermuxTerminalSessionActivityClient != null)
-                mTermuxTerminalSessionActivityClient.renameSession(session);
-        });
-
-        sheetView.findViewById(R.id.session_option_close).setOnClickListener(v -> {
-            sheet.dismiss();
-            if (mTermuxTerminalSessionActivityClient != null) {
+    private void showSessionPopupMenu(View anchor, TerminalSession session) {
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, anchor);
+        popup.getMenu().add(0, 1, 0, "Rename");
+        popup.getMenu().add(0, 2, 1, "Close");
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == 1) {
+                if (mTermuxTerminalSessionActivityClient != null)
+                    mTermuxTerminalSessionActivityClient.renameSession(session);
+            } else if (item.getItemId() == 2) {
                 session.finishIfRunning();
-                mTermuxTerminalSessionActivityClient.removeFinishedSession(session);
+                if (mTermuxTerminalSessionActivityClient != null)
+                    mTermuxTerminalSessionActivityClient.removeFinishedSession(session);
             }
+            return true;
         });
-
-        sheet.show();
+        popup.show();
     }
 
     /**

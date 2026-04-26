@@ -1,31 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory app:title="Terminal Theme">
+    <Preference
+        app:key="open_theme_picker"
+        app:title="Themes &amp; Colors"
+        app:summary="Choose terminal theme and accent color" />
 
-        <Preference app:key="theme_default_dark"   app:title="Default Dark" />
-        <Preference app:key="theme_rgui"            app:title="RGUI" />
-        <Preference app:key="theme_amber"           app:title="Amber (Migraine-Friendly)" />
-        <Preference app:key="theme_low_contrast"    app:title="Low Contrast" />
-        <Preference app:key="theme_solarized_dark"  app:title="Solarized Dark" />
-        <Preference app:key="theme_dracula"         app:title="Dracula" />
-        <Preference app:key="theme_custom"          app:title="🎨 Custom…" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="Accent Color">
-
-        <Preference app:key="color_purple"  app:title="🟣 Purple (Default)" />
-        <Preference app:key="color_blue"    app:title="🔵 Blue" />
-        <Preference app:key="color_green"   app:title="🟢 Green" />
-        <Preference app:key="color_orange"  app:title="🟠 Orange" />
-        <Preference app:key="color_red"     app:title="🔴 Red" />
-        <Preference app:key="color_teal"    app:title="🩵 Teal" />
-        <Preference app:key="color_pink"    app:title="🩷 Pink" />
-        <Preference app:key="color_gold"    app:title="🟡 Gold" />
-        <Preference app:key="color_white"   app:title="⚪ White" />
-        <Preference app:key="color_custom"  app:title="🎨 Custom…" />
-
+    <PreferenceCategory app:title="Custom Terminal Theme">
+        <Preference app:key="theme_custom" app:title="🎨 Edit Custom Theme…" />
     </PreferenceCategory>
 
 </PreferenceScreen>
