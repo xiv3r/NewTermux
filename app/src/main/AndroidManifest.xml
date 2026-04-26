@@ -125,6 +125,13 @@
             android:theme="@style/Theme.NewTermux" />
 
         <activity
+            android:name=".app.activities.ThemePickerActivity"
+            android:exported="false"
+            android:label="Themes &amp; Colors"
+            android:parentActivityName=".app.activities.SettingsActivity"
+            android:theme="@style/Theme.NewTermux" />
+
+        <activity
             android:name=".shared.activities.ReportActivity"
             android:theme="@style/Theme.MarkdownViewActivity.DayNight"
             android:documentLaunchMode="intoExisting" />

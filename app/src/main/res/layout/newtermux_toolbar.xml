@@ -130,22 +130,24 @@
         android:layout_height="1dp"
         android:background="@color/nt_divider" />
 
-    <!-- Session tabs (horizontal scrollable chips) -->
+    <!-- Session pip row (live mini terminal previews) -->
     <HorizontalScrollView
         android:id="@+id/session_tabs_scroll"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
+        android:layout_height="80dp"
         android:scrollbars="none"
         android:background="@color/nt_tab_bg">
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/session_chip_group"
+        <LinearLayout
+            android:id="@+id/session_pip_container"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:orientation="horizontal"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
-            app:singleSelection="true"
-            app:chipSpacingHorizontal="4dp" />
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:gravity="center_vertical" />
 
     </HorizontalScrollView>
 

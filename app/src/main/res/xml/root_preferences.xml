@@ -4,7 +4,7 @@
         app:key="newtermux_appearance"
         app:title="Appearance"
         app:summary="Accent color and UI theme"
-        app:fragment="com.termux.app.activities.SettingsActivity$AppearancePreferencesFragment"/>
+        app:persistent="false" />
 
     <Preference
         app:key="package_manager"

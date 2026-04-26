@@ -94,6 +94,14 @@ public class SettingsActivity extends AppCompatActivity {
             configureAboutPreference(context);
             configureDonatePreference(context);
 
+            Preference appearancePref = findPreference("newtermux_appearance");
+            if (appearancePref != null) {
+                appearancePref.setOnPreferenceClickListener(pref -> {
+                    startActivity(new Intent(context, ThemePickerActivity.class));
+                    return true;
+                });
+            }
+
             Preference pkgManagerPref = findPreference("package_manager");
             if (pkgManagerPref != null) {
                 pkgManagerPref.setOnPreferenceClickListener(pref -> {
@@ -734,38 +742,25 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static class AppearancePreferencesFragment extends PreferenceFragmentCompat {
 
-        private static final int[] COLOR_VALUES = NewTermuxTheme.COLORS;
-        private static final String[] COLOR_KEYS = {
-            "color_purple", "color_blue", "color_green", "color_orange",
-            "color_red", "color_teal", "color_pink", "color_gold", "color_white"
-        };
-
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.newtermux_appearance_preferences, rootKey);
             Context context = getContext();
             if (context == null) return;
 
-            // --- Terminal Theme (presets) ---
-            String currentTheme = NewTermuxColorTheme.getCurrentTheme(context);
-            for (String themeKey : NewTermuxColorTheme.THEME_KEYS) {
-                if (NewTermuxColorTheme.THEME_KEY_CUSTOM.equals(themeKey)) continue;
-                final String key = themeKey;
-                Preference pref = findPreference("theme_" + key);
-                if (pref == null) continue;
-                if (key.equals(currentTheme)) pref.setSummary("✓ Active");
-                pref.setOnPreferenceClickListener(preference -> {
-                    NewTermuxColorTheme.applyTheme(context, key);
-                    refreshThemeSummaries(key);
+            // Launch the grid theme/accent picker
+            Preference pickerPref = findPreference("open_theme_picker");
+            if (pickerPref != null) {
+                pickerPref.setOnPreferenceClickListener(pref -> {
+                    startActivity(new android.content.Intent(context,
+                            com.termux.app.activities.ThemePickerActivity.class));
                     return true;
                 });
             }
 
-            // --- Terminal Theme (custom) ---
+            // Custom theme editor
             Preference themeCustomPref = findPreference("theme_custom");
             if (themeCustomPref != null) {
-                if (NewTermuxColorTheme.THEME_KEY_CUSTOM.equals(currentTheme))
-                    themeCustomPref.setSummary("✓ Active");
                 themeCustomPref.setOnPreferenceClickListener(pref -> {
                     new AlertDialog.Builder(requireContext())
                         .setTitle("Custom Theme Scope")
@@ -776,60 +771,6 @@ public class SettingsActivity extends AppCompatActivity {
                         .show();
                     return true;
                 });
-            }
-
-            // --- Accent Color (presets) ---
-            int current = NewTermuxTheme.getAccentColor(context);
-            for (int i = 0; i < COLOR_KEYS.length; i++) {
-                final int color = COLOR_VALUES[i];
-                Preference pref = findPreference(COLOR_KEYS[i]);
-                if (pref == null) continue;
-                if (color == current) pref.setSummary("✓ Active");
-                pref.setOnPreferenceClickListener(preference -> {
-                    NewTermuxTheme.setAccentColor(context, color);
-                    refreshAccentSummaries(color);
-                    return true;
-                });
-            }
-
-            // --- Accent Color (custom) ---
-            Preference colorCustomPref = findPreference("color_custom");
-            if (colorCustomPref != null) {
-                if (NewTermuxTheme.isCustomAccentActive(context))
-                    colorCustomPref.setSummary("✓ Active (" + colorHex(current) + ")");
-                colorCustomPref.setOnPreferenceClickListener(pref -> {
-                    new ColorPickerDialog(context)
-                        .setInitialColor(NewTermuxTheme.getAccentColor(context))
-                        .setOnColorSelectedListener(color -> {
-                            NewTermuxTheme.setAccentColor(context, color);
-                            refreshAccentSummaries(color);
-                        })
-                        .show();
-                    return true;
-                });
-            }
-        }
-
-        private void refreshThemeSummaries(String activeKey) {
-            for (String k : NewTermuxColorTheme.THEME_KEYS) {
-                Preference p = findPreference("theme_" + k);
-                if (p != null) p.setSummary(k.equals(activeKey) ? "✓ Active" : null);
-            }
-        }
-
-        private void refreshAccentSummaries(int activeColor) {
-            for (int j = 0; j < COLOR_KEYS.length; j++) {
-                Preference p = findPreference(COLOR_KEYS[j]);
-                if (p != null) p.setSummary(COLOR_VALUES[j] == activeColor ? "✓ Active" : null);
-            }
-            Preference customPref = findPreference("color_custom");
-            if (customPref != null) {
-                Context ctx = getContext();
-                if (ctx != null && NewTermuxTheme.isCustomAccentActive(ctx)) {
-                    customPref.setSummary("✓ Active (" + colorHex(activeColor) + ")");
-                } else {
-                    customPref.setSummary(null);
-                }
             }
         }
 
@@ -896,7 +837,6 @@ public class SettingsActivity extends AppCompatActivity {
                 .setPositiveButton("Apply", (d, w) -> {
                     String newContent = buildThemeContent(baseContent, colorMap);
                     NewTermuxColorTheme.applyCustomTheme(context, newContent);
-                    refreshThemeSummaries(NewTermuxColorTheme.THEME_KEY_CUSTOM);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();

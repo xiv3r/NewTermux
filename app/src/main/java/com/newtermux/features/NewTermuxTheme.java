@@ -38,6 +38,13 @@ public class NewTermuxTheme {
             .edit().putInt(KEY_ACCENT_COLOR, color).apply();
     }
 
+    public static String getColorName(int color) {
+        for (int i = 0; i < COLORS.length; i++) {
+            if (COLORS[i] == color) return COLOR_NAMES[i];
+        }
+        return String.format("#%06X", color & 0xFFFFFF);
+    }
+
     /** Returns true if the current accent_color doesn't match any of the 9 presets. */
     public static boolean isCustomAccentActive(Context context) {
         int cur = getAccentColor(context);

@@ -81,6 +81,7 @@ import com.newtermux.features.NewTermuxSettings;
 import com.newtermux.features.NewTermuxTheme;
 import com.newtermux.features.RootToggleManager;
 import com.newtermux.features.SpeechInputManager;
+import com.termux.app.terminal.MiniTerminalPipView;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -217,7 +218,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private String mPendingOriginal;
     private ImageButton mBtnSTT;
     private ImageButton mBtnRootToggle;
-    private com.google.android.material.chip.ChipGroup mSessionChipGroup;
+    private LinearLayout mSessionPipContainer;
     private static final int REQUEST_RECORD_AUDIO = 201;
 
     // SAF launchers for Export Screen and Make Script
@@ -850,8 +851,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             });
         }
 
-        // Session tabs (ChipGroup)
-        mSessionChipGroup = findViewById(R.id.session_chip_group);
+        // Session pip row
+        mSessionPipContainer = findViewById(R.id.session_pip_container);
         updateSessionTabs();
 
         // STT result callback
@@ -875,57 +876,110 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         });
     }
 
-    /** Update the horizontal session tabs (ChipGroup) */
+    /** Update the horizontal session pip row with live mini terminal previews. */
     public void updateSessionTabs() {
-        if (mSessionChipGroup == null || mTermuxService == null) return;
+        if (mSessionPipContainer == null || mTermuxService == null) return;
 
-        mSessionChipGroup.removeAllViews();
+        mSessionPipContainer.removeAllViews();
         java.util.List<com.termux.shared.termux.shell.command.runner.terminal.TermuxSession> sessions = mTermuxService.getTermuxSessions();
         TerminalSession currentSession = getCurrentSession();
+
+        float density   = getResources().getDisplayMetrics().density;
+        int pipWidthPx  = (int) (density * 86);
+        int pipHeightPx = (int) (density * 58);
+        int marginPx    = (int) (density * 4);
+        int labelGapPx  = (int) (density * 2);
 
         for (int i = 0; i < sessions.size(); i++) {
             com.termux.shared.termux.shell.command.runner.terminal.TermuxSession termuxSession = sessions.get(i);
             TerminalSession session = termuxSession.getTerminalSession();
-            
-            com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(this);
-            String chipLabel = (session.mSessionName != null && !session.mSessionName.isEmpty())
-                ? session.mSessionName
-                : "Session " + (i + 1);
-            chip.setText(chipLabel);
-            chip.setCheckable(true);
-            chip.setChecked(session == currentSession);
-            chip.setTag(termuxSession);
-            
-            // Modern Material 3 style (can be refined in XML later)
-            int accentColor = NewTermuxTheme.getAccentColor(this);
-            int chipColor = session == currentSession ? accentColor : getResources().getColor(R.color.nt_tab_inactive, getTheme());
-            chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(chipColor));
-            chip.setTextColor(getResources().getColor(android.R.color.white));
 
-            chip.setOnClickListener(v -> {
+            // Vertical wrapper: name label on top, live pip below
+            LinearLayout wrapper = new LinearLayout(this);
+            wrapper.setOrientation(LinearLayout.VERTICAL);
+            wrapper.setGravity(Gravity.CENTER_HORIZONTAL);
+            LinearLayout.LayoutParams wrapperLp = new LinearLayout.LayoutParams(pipWidthPx, LinearLayout.LayoutParams.WRAP_CONTENT);
+            wrapperLp.setMarginEnd(marginPx);
+            wrapper.setLayoutParams(wrapperLp);
+
+            // Session name label
+            android.widget.TextView nameLabel = new android.widget.TextView(this);
+            String displayName = (session.mSessionName != null && !session.mSessionName.isEmpty())
+                    ? session.mSessionName : "#" + (i + 1);
+            nameLabel.setText(displayName);
+            nameLabel.setTextSize(10f);
+            nameLabel.setTextColor(0xFFAAAAAA);
+            nameLabel.setMaxLines(1);
+            nameLabel.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            nameLabel.setGravity(Gravity.CENTER_HORIZONTAL);
+            LinearLayout.LayoutParams nameLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            nameLp.bottomMargin = labelGapPx;
+            nameLabel.setLayoutParams(nameLp);
+            wrapper.addView(nameLabel);
+
+            // Live pip preview
+            MiniTerminalPipView pip = new MiniTerminalPipView(this);
+            pip.setSession(session);
+            pip.setActive(session == currentSession);
+            pip.setLayoutParams(new LinearLayout.LayoutParams(pipWidthPx, pipHeightPx));
+            wrapper.addView(pip);
+
+            wrapper.setOnClickListener(v -> {
                 if (mTermuxTerminalSessionActivityClient != null) {
                     mTermuxTerminalSessionActivityClient.setCurrentSession(session);
                     updateSessionTabs();
                 }
             });
 
-            chip.setOnLongClickListener(v -> {
-                if (mTermuxTerminalSessionActivityClient != null
-                        && com.newtermux.features.NewTermuxSettings.isSessionRenameEnabled(this))
-                    mTermuxTerminalSessionActivityClient.renameSession(session);
+            wrapper.setOnLongClickListener(v -> {
+                showSessionPopupMenu(v, session);
                 return true;
             });
 
-            chip.setCloseIconVisible(true);
-            chip.setOnCloseIconClickListener(v -> {
-                if (mTermuxTerminalSessionActivityClient != null) {
-                    session.finishIfRunning();
-                    mTermuxTerminalSessionActivityClient.removeFinishedSession(session);
-                    updateSessionTabs();
-                }
-            });
+            mSessionPipContainer.addView(wrapper);
+        }
+    }
 
-            mSessionChipGroup.addView(chip);
+    private void showSessionPopupMenu(View anchor, TerminalSession session) {
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, anchor);
+        popup.getMenu().add(0, 1, 0, "Rename");
+        popup.getMenu().add(0, 2, 1, "Close");
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == 1) {
+                if (mTermuxTerminalSessionActivityClient != null)
+                    mTermuxTerminalSessionActivityClient.renameSession(session);
+            } else if (item.getItemId() == 2) {
+                session.finishIfRunning();
+                if (mTermuxTerminalSessionActivityClient != null)
+                    mTermuxTerminalSessionActivityClient.removeFinishedSession(session);
+            }
+            return true;
+        });
+        popup.show();
+    }
+
+    /**
+     * Notify the pip for a specific session to redraw (called from onTextChanged).
+     * Only updates the matching pip without rebuilding the whole row.
+     */
+    public void notifyPipUpdate(TerminalSession session) {
+        if (mSessionPipContainer == null) return;
+        for (int i = 0; i < mSessionPipContainer.getChildCount(); i++) {
+            android.view.View child = mSessionPipContainer.getChildAt(i);
+            if (child instanceof ViewGroup) {
+                ViewGroup wrapper = (ViewGroup) child;
+                for (int j = 0; j < wrapper.getChildCount(); j++) {
+                    android.view.View inner = wrapper.getChildAt(j);
+                    if (inner instanceof MiniTerminalPipView) {
+                        MiniTerminalPipView pip = (MiniTerminalPipView) inner;
+                        if (pip.getSession() == session) {
+                            pip.notifyUpdate();
+                            return;
+                        }
+                    }
+                }
+            }
         }
     }
 
