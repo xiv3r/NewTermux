@@ -43,8 +43,8 @@ android {
     defaultConfig {
         minSdkVersion project.properties.minSdkVersion.toInteger()
         targetSdkVersion project.properties.targetSdkVersion.toInteger()
-        versionCode 17
-        versionName "1.5.4"
+        versionCode 18
+        versionName "1.5.5"
 
         if (appVersionName) versionName = appVersionName
         validateVersionName(versionName)
@@ -264,3 +264,4 @@ afterEvaluate {
         variant.javaCompileProvider.get().dependsOn(downloadBootstraps)
     }
 }
+
