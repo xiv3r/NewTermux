@@ -81,6 +81,7 @@ import com.newtermux.features.NewTermuxSettings;
 import com.newtermux.features.NewTermuxTheme;
 import com.newtermux.features.RootToggleManager;
 import com.newtermux.features.SpeechInputManager;
+import com.termux.app.terminal.MiniTerminalPipView;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -217,7 +218,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private String mPendingOriginal;
     private ImageButton mBtnSTT;
     private ImageButton mBtnRootToggle;
-    private com.google.android.material.chip.ChipGroup mSessionChipGroup;
+    private LinearLayout mSessionPipContainer;
     private static final int REQUEST_RECORD_AUDIO = 201;
 
     // SAF launchers for Export Screen and Make Script
@@ -850,8 +851,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             });
         }
 
-        // Session tabs (ChipGroup)
-        mSessionChipGroup = findViewById(R.id.session_chip_group);
+        // Session pip row
+        mSessionPipContainer = findViewById(R.id.session_pip_container);
         updateSessionTabs();
 
         // STT result callback
@@ -875,57 +876,63 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         });
     }
 
-    /** Update the horizontal session tabs (ChipGroup) */
+    /** Update the horizontal session pip row with live mini terminal previews. */
     public void updateSessionTabs() {
-        if (mSessionChipGroup == null || mTermuxService == null) return;
+        if (mSessionPipContainer == null || mTermuxService == null) return;
 
-        mSessionChipGroup.removeAllViews();
+        mSessionPipContainer.removeAllViews();
         java.util.List<com.termux.shared.termux.shell.command.runner.terminal.TermuxSession> sessions = mTermuxService.getTermuxSessions();
         TerminalSession currentSession = getCurrentSession();
+
+        int pipWidthPx  = (int) (getResources().getDisplayMetrics().density * 72);
+        int pipHeightPx = (int) (getResources().getDisplayMetrics().density * 48);
+        int marginPx    = (int) (getResources().getDisplayMetrics().density * 4);
 
         for (int i = 0; i < sessions.size(); i++) {
             com.termux.shared.termux.shell.command.runner.terminal.TermuxSession termuxSession = sessions.get(i);
             TerminalSession session = termuxSession.getTerminalSession();
-            
-            com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(this);
-            String chipLabel = (session.mSessionName != null && !session.mSessionName.isEmpty())
-                ? session.mSessionName
-                : "Session " + (i + 1);
-            chip.setText(chipLabel);
-            chip.setCheckable(true);
-            chip.setChecked(session == currentSession);
-            chip.setTag(termuxSession);
-            
-            // Modern Material 3 style (can be refined in XML later)
-            int accentColor = NewTermuxTheme.getAccentColor(this);
-            int chipColor = session == currentSession ? accentColor : getResources().getColor(R.color.nt_tab_inactive, getTheme());
-            chip.setChipBackgroundColor(android.content.res.ColorStateList.valueOf(chipColor));
-            chip.setTextColor(getResources().getColor(android.R.color.white));
 
-            chip.setOnClickListener(v -> {
+            MiniTerminalPipView pip = new MiniTerminalPipView(this);
+            pip.setSession(session);
+            pip.setActive(session == currentSession);
+
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(pipWidthPx, pipHeightPx);
+            lp.setMarginEnd(marginPx);
+            pip.setLayoutParams(lp);
+
+            pip.setOnClickListener(v -> {
                 if (mTermuxTerminalSessionActivityClient != null) {
                     mTermuxTerminalSessionActivityClient.setCurrentSession(session);
                     updateSessionTabs();
                 }
             });
 
-            chip.setOnLongClickListener(v -> {
+            pip.setOnLongClickListener(v -> {
                 if (mTermuxTerminalSessionActivityClient != null
-                        && com.newtermux.features.NewTermuxSettings.isSessionRenameEnabled(this))
+                        && NewTermuxSettings.isSessionRenameEnabled(this))
                     mTermuxTerminalSessionActivityClient.renameSession(session);
                 return true;
             });
 
-            chip.setCloseIconVisible(true);
-            chip.setOnCloseIconClickListener(v -> {
-                if (mTermuxTerminalSessionActivityClient != null) {
-                    session.finishIfRunning();
-                    mTermuxTerminalSessionActivityClient.removeFinishedSession(session);
-                    updateSessionTabs();
-                }
-            });
+            mSessionPipContainer.addView(pip);
+        }
+    }
 
-            mSessionChipGroup.addView(chip);
+    /**
+     * Notify the pip for a specific session to redraw (called from onTextChanged).
+     * Only updates the matching pip without rebuilding the whole row.
+     */
+    public void notifyPipUpdate(TerminalSession session) {
+        if (mSessionPipContainer == null) return;
+        for (int i = 0; i < mSessionPipContainer.getChildCount(); i++) {
+            android.view.View child = mSessionPipContainer.getChildAt(i);
+            if (child instanceof MiniTerminalPipView) {
+                MiniTerminalPipView pip = (MiniTerminalPipView) child;
+                if (pip.getSession() == session) {
+                    pip.notifyUpdate();
+                    return;
+                }
+            }
         }
     }
 
