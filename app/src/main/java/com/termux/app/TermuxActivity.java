@@ -29,6 +29,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 
 import com.termux.BuildConfig;
@@ -908,14 +909,34 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             });
 
             pip.setOnLongClickListener(v -> {
-                if (mTermuxTerminalSessionActivityClient != null
-                        && NewTermuxSettings.isSessionRenameEnabled(this))
-                    mTermuxTerminalSessionActivityClient.renameSession(session);
+                showSessionBottomSheet(session);
                 return true;
             });
 
             mSessionPipContainer.addView(pip);
         }
+    }
+
+    private void showSessionBottomSheet(TerminalSession session) {
+        BottomSheetDialog sheet = new BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_session_options, null);
+        sheet.setContentView(sheetView);
+
+        sheetView.findViewById(R.id.session_option_rename).setOnClickListener(v -> {
+            sheet.dismiss();
+            if (mTermuxTerminalSessionActivityClient != null)
+                mTermuxTerminalSessionActivityClient.renameSession(session);
+        });
+
+        sheetView.findViewById(R.id.session_option_close).setOnClickListener(v -> {
+            sheet.dismiss();
+            if (mTermuxTerminalSessionActivityClient != null) {
+                session.finishIfRunning();
+                mTermuxTerminalSessionActivityClient.removeFinishedSession(session);
+            }
+        });
+
+        sheet.show();
     }
 
     /**
